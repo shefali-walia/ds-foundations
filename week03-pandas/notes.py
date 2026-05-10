@@ -109,4 +109,8 @@ print(anime_data.head(3))
   print(os.listdir('.')) → what files can it see from there? """
 
 
-anime_data.info()
+anime_data.info() # gives info about the no. of not null data and type of variable for all variables.
+anime_data.describe() # gives summary statistics for all numeric variables (count, mean, std, min, 25%, 50%, 75%, max)
+anime_data.head().T # Transpose of the head of the dataframe. Useful for wide dataframes where columns are more than rows. 
+
+

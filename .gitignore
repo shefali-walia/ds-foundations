@@ -1,0 +1,5 @@
+MyAnimeList-Database-master/
+*.ipynb
+__pycache__/
+*.pyc
+.venv/

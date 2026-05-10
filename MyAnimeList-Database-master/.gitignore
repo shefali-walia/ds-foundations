@@ -1,9 +1,0 @@
-.ipynb_checkpoints/
-.DS_Store
-data/html/*
-data/users
-data/_revised_clubs.csv
-data/_last_revised_users.csv
-data/users.csv
-data/users_list.csv
-data/clubs.csv
