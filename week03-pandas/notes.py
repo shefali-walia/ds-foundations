@@ -113,4 +113,71 @@ anime_data.info() # gives info about the no. of not null data and type of variab
 anime_data.describe() # gives summary statistics for all numeric variables (count, mean, std, min, 25%, 50%, 75%, max)
 anime_data.head().T # Transpose of the head of the dataframe. Useful for wide dataframes where columns are more than rows. 
 
+# DATA SELECTION AND ASSIGNMENT
+# Basically like indexing and slicing in numpy but with labels.
+
+# By columns:
+anime_data['Score'] # selecting a column by its name, returns a Series
+# can also write like anime_data.Score but it is not recommended because if there is a column name with space or special characters, it will cause an error. So it is better to use the first method.
+anime_data[['Score', 'Episodes']] # selecting multiple columns by their names as a list, returns a DataFrame
+
+cols_to_use = ['MAL_ID', 'Name', 'Score', 'Genres', 'Type', 'Aired', 'Studios', 'Source']
+anime_data_extracted = anime_data[cols_to_use]
+print(anime_data_extracted.head())
+
+# By rows:
+anime_data_extracted[0:3] # 3 not included, like in numpy slicing
+df_i['a':'c'] # if index is a letter or string, it is inclusive of the end index. 
+
+# df.loc[] allows you to retrieve a specific row or column, like Numpy, by specifying the label (index name or column name)
+# loc = location
+anime_data_extracted.loc[4] 
+anime_data_extracted.loc[3:8] # INCLUSIVE of the end index
+
+# Add column names aftr comma
+anime_data_extracted.loc[:, 'Score'] # all rows, only Score column
+anime_data_extracted.loc[:, ['Score', 'Type']] # all rows, only Score and Type columns  
+anime_data_extracted.loc[0:3, ['Score', 'Type']] # first 3 rows, only Score and Type columns
+
+# Use df.iloc[] when retrieving rows or columns by their index no. or column no. (Not by column names)
+# iloc = integer location
+anime_data.iloc[0:4, [0,2]] # first 4 rows, only 1st and 3rd columns (0 and 2 because of 0-based indexing)
+
+# df.at[] and df.iat[] are used to retrieve a single element.
+anime_data.at[0, 'Name']
+anime_data.iat[0, 1] 
+
+# Can create new column  using the [] brackets with the new column name. 
+# If you use a column name that already exists, the data will be overwritten.
+df['Score'] = np.arange(5) *10  # np.arange(5) generates an array of 5 numbers starting from 0, *10 multiplies every element by 10, so we get [0, 10, 20, 30, 40]
+print(df)
+
+# to replace any value, can use df.loc, iloc, at, iat :
+df.at[0, 'Birth_year'] = 2000
+print(df)
+
+# Extracting data based on conditions:
+print(anime_data_extracted['Score'] != 'Unknown') # gives a boolean series where True means the condition is met and False means it is not met.
+anime_data_extracted = anime_data_extracted[anime_data_extracted['Score'] != 'Unknown']
+print(anime_data_extracted.head())
+print(anime_data_extracted[(anime_data_extracted['Studios'] == 'Nomad') | (anime_data_extracted['Studios'] == 'Sunrise')])
+# can use & or | for specifying conditions
+print(anime_data_extracted[anime_data_extracted['Studios'].isin(['Sunrise', 'Nomad'])].head())  # Can also use isin(list-name) to specify multiple conditions for a column.
+
+# DETERMINATION OF NAN (NULL)
+# Nan = not a number = missing value 
+# data may be missing and the corresponding data may not exist.
+# Missing values can cause incorrect calculations like averages etc. so it's imp. to exclude them from operations.
+# We use isnull() to check if it is nan
+
+print(anime_data_extracted.isnull())
+print(anime_data_extracted.isnull().sum()) # gives the count of null values in each column
+
+# SORTING VALUES
+# Can sort data based on index as well as the elements
+
+# sort by index (may appear as if not needed but useful when you have already applied operations like shuffling rows, sorting by columns, deleting rows, or concatenating data etc)
+print(anime_data_extracted.sort_index)
+# sort by values - default is ascending order, can specify descending order by setting ascending = False
+print(anime_data_extracted.sort_values(by = 'Score', ascending = False))
 

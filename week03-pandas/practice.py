@@ -1,0 +1,1 @@
+# To replace all matching elements in the DataFrame, replace() method can be used. 
