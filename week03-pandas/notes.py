@@ -14,6 +14,7 @@ import numpy.random as random
 import pandas as pd
 from pandas import Series, DataFrame
 
+#-------------------------------------------------
 # SERIES
 # series is like a one-dimensional numpy array with labels for indices
 series1 = Series([1, 1, 2, 4, 5 ,8, 19]) # if indices not mentioned, it is 0,1,2...
@@ -55,6 +56,7 @@ print("Column Names: ", df_i.columns) #all column names in the dataframe
 pd.set_option('display.max_columns', 10) 
 pd.set_option('display.max_rows', 10)
 
+#-------------------------------------------------
 # LOADING AND EXTRACING DATA
 # Usually data comes as CSV files. When there are multiple files, they are often compressed into ZIP files for easier distribution.
 # So we have to retrieve these files using python and then we can use pandas to explore the data.
@@ -79,6 +81,7 @@ z = zipfile.ZipFile(io.BytesIO(r.content))
 z.extractall() # Or could also do z.extractall("/some/path") to extract to a specific folder
 # Takes every file inside the zip and dumps it into the current working directory 
 
+#-------------------------------------------------
 # READING AND CHECKING DATA
 base = os.path.dirname(os.path.abspath(__file__))
 anime_data = pd.read_csv(os.path.join(base, 'MyAnimeList-Database-master', 'data', 'anime.csv'))
@@ -113,6 +116,7 @@ anime_data.info() # gives info about the no. of not null data and type of variab
 anime_data.describe() # gives summary statistics for all numeric variables (count, mean, std, min, 25%, 50%, 75%, max)
 anime_data.head().T # Transpose of the head of the dataframe. Useful for wide dataframes where columns are more than rows. 
 
+#-------------------------------------------------
 # DATA SELECTION AND ASSIGNMENT
 # Basically like indexing and slicing in numpy but with labels.
 
@@ -164,6 +168,7 @@ print(anime_data_extracted[(anime_data_extracted['Studios'] == 'Nomad') | (anime
 # can use & or | for specifying conditions
 print(anime_data_extracted[anime_data_extracted['Studios'].isin(['Sunrise', 'Nomad'])].head())  # Can also use isin(list-name) to specify multiple conditions for a column.
 
+#-------------------------------------------------
 # DETERMINATION OF NAN (NULL)
 # Nan = not a number = missing value 
 # data may be missing and the corresponding data may not exist.
@@ -173,6 +178,7 @@ print(anime_data_extracted[anime_data_extracted['Studios'].isin(['Sunrise', 'Nom
 print(anime_data_extracted.isnull())
 print(anime_data_extracted.isnull().sum()) # gives the count of null values in each column
 
+#-------------------------------------------------
 # SORTING VALUES
 # Can sort data based on index as well as the elements
 
@@ -181,3 +187,54 @@ print(anime_data_extracted.sort_index)
 # sort by values - default is ascending order, can specify descending order by setting ascending = False
 print(anime_data_extracted.sort_values(by = 'Score', ascending = False))
 
+#-------------------------------------------------
+# MERGING DATA
+""" There are four ways to join data:
+1. INNER JOIN - when both data have keys, only the rows with matching keys in both dataframes are included in the result. So overall data can reduce (like intersection of two sets)
+* OUTER JOINS: (keep amount of data same (no data discarded), have to specify using how = 'left', 'right', 'outer' in pd.merge() function)
+2. LEFT JOIN/ LEFT OUTER JOIN - when only data on the left left has keys (pd.merge(df1, df2, how = 'left'))
+3. RIGHT JOIN/ RIGHT OUTER JOIN - when only data on the right has keys (how = 'right')
+4. FULL OUTER JOIN/FULL JOIN - when key exists on either side. (how = 'outer' or how = 'full')
+* key refers to the column(s) on which the join is based. It is used to identify matching rows between the two dataframes being joined. The key column(s) should have the same name and data type in both dataframes for the join to work correctly.
+* Missing values are filled with NaN in the result of outer joins.
+* To perform the merge, we use pd.merge() fnct. whose default is inner join.
+"""
+# Keys are automatically recognized if they have the same name in both dataframes.
+# Keys to merge can be specified explicitly using "on".
+# If the key columns have different names, you can specify them using the left_on and right_on parameters in the merge function.
+pd.merge(anime_data_extracted, anime_synop)
+pd.merge(anime_data_extracted, anime_synop, on = 'MAL_ID')
+pd.merge(anime_list, anime_data_extracted, left_on = 'anime_id', right_on = 'MAL_ID')
+# can use left_on, right_on when the key columns have different names in the two dataframes being merged. left_on specifies the column name in the left dataframe, and right_on specifies the column name in the right dataframe that should be used as the key for merging.
+# left_index and right_index can be used when the index of the dataframe is the key for merging. left_index = True means use the index of the left dataframe as the key, and right_index = True means use the index of the right dataframe as the key.
+# can add suffixes to the argument to specify which dataframe the eys came from, useful when there are duplicate columns occuring.
+# Ex: pd.merge(df1, df2, on = '..', suffixes = ('_1', '_2'))
+
+# use df.join() to use index as key. Use similar to pd.merge() but it is more convenient when you want to join on index. By default, it performs a left join.
+# READ DOCUMENTATION FOR THIS FUNCTION CAREFULLY BECAUSE IT HAS MANY PARAMETERS AND OPTIONS!
+
+# CONCATENATING DATA
+# Combines dataframes either vertically (stacking rows) or horizontally (stacking columns)
+# pd.concat() - default vertical join, can specify horizontal join by setting axis = 1
+"""
+pd.concat([df1, df2]) =  vertical join, stacks rows of df2 below df1
+* The columns of df1 and df2 should be the same or at least have some common columns, not common columns are filled with NaN. 
+* In this case, index is concatenated as it is, so if df1 and df2 have same index values, the resulting dataframe will have duplicate index values.
+* Use pd.concat([df1, df2], ignore_index = True) to reattach the index in order from top. 
+* The sort argument can be set to True to sort the column, or to False to join without sorting.
+* Sort => resulting DataFrame's columns are sorted alphabetically. If sort was False, the columns would appear in the order they were encountered in the input DataFrames. 
+"""
+# pd.concat([df1, df2], axis = 1) => horizontal join, stacks columns of df2 to the right of df1
+# In this case, they will be tied by index and the columns will be joined as they are. 
+# If axis=0 is specified, the columns will be joined vertically.
+
+#-------------------------------------------------
+# MANIPULATING AND TRANSFORMING DATA
+
+# Deleting data - df.drop():
+# For deleting rows: Specify index of the rows you want to delete as a list in the first argument. Set axis to 0 (default is axis = 0, so you can also omit it)
+# For deleting columns: Specify column names you want to delete as a list in the first argument. Set axis to 1. 
+print(anime_data_extracted.drop(index = [0,2]).head()) # deletes the rows with index 0 and 2 - so index is no longer continuous
+# use df.reset_index() to reassign a new index
+print(anime_data_extracted.drop(index=[0,2]).reset_index().head()) # resets the index to be continuous but the old index is added as a new column called "index" so we can drop it as well by adding drop = True argument in reset_index() function.
+print(anime_data_extracted.drop(['Studios'], axis = 1).head())
