@@ -238,3 +238,99 @@ print(anime_data_extracted.drop(index = [0,2]).head()) # deletes the rows with i
 # use df.reset_index() to reassign a new index
 print(anime_data_extracted.drop(index=[0,2]).reset_index().head()) # resets the index to be continuous but the old index is added as a new column called "index" so we can drop it as well by adding drop = True argument in reset_index() function.
 print(anime_data_extracted.drop(['Studios'], axis = 1).head())
+# use inplace = True to replace the original dataframe, otherwise it will return a new dataframe with the changes but the original dataframe will remain unchanged.
+
+# Removing Duplicates 
+# to determine duplicates- df.duplicated() - this returns a True if a duplicate exists in the same column. If there are duplicates, the first one will be False and the second one will be True
+print(anime_data_extracted["Name"].duplicated().sum())
+# drop_duplicates() returns the resulting data after removing duplicates
+print(anime_data_extracted["Name"].drop_duplicates().isnull().sum()) #should give zero now
+
+# Mapping
+# Pulls data corresponding to a common key from one (reference) table to the other
+status_map = {
+    1: "Watching",
+    2: "Completed",
+    3: "On-Hold",
+    4: "Dropped",
+    6: "Plan to Watch"
+}  # Reference data
+invalid_status = [0, 5, 33, 55] # invalid status codes to drop from the dta
+anime_list = anime_list[~anime_list['watching_status'].isin(invalid_status)] # ~ = not, so this line keeps only the rows where watching_status is not in the invalid_status list
+anime_list["status_label"] = anime_list["watching_status"].map(status_map) # creates a new column called status_label by mapping the watching_status column to the status_map dictionary. So it replaces the numeric codes with the corresponding string labels from the dictionary.
+print(anime_list.head())
+# can combine mapping with lambda functions to create new columns based on conditions 
+
+# Bin Splitting
+# divide data into some discrete range for aggregation
+# pd.cut(): the first argument is the data to be split and the second argument is the boundary value to be split
+scores = [0, 2, 4, 6, 8, 10]
+anime_data_extracted["Score"] = pd.to_numeric(anime_data_extracted["Score"], errors="coerce") # Added this line because got error while running without this, as scores were string type too so had to convert to numeric first. errors = "coerce" means that if there are any values that cannot be converted to numeric, they will be replaced with NaN instead of throwing an error.
+anime_data_cut_by_score = pd.cut(anime_data_extracted["Score"], scores) # can specify left or right boundary to be included by setting right = False or True (default is right = True, so the right boundary is included and the left boundary is excluded)
+print(anime_data_cut_by_score)
+print(pd.value_counts(anime_data_cut_by_score)) # gives the count of values in each bin
+# can also label each bin by adding labels parameter 
+group_names = ['D', 'C', 'B', 'A', 'A+']
+anime_data_cut_by_score = pd.cut(anime_data_extracted["Score"], scores, labels = group_names)
+print(pd.value_counts(anime_data_cut_by_score))
+
+# we can also split data using integers, like: 
+print(pd.cut(anime_data_extracted["Score"], 2)) # this will divide all score values into 2 equal intervals i.e if total range of scores is 0 to 10, it will divide into 0-5 and 5-10. So the boundary values are automatically calculated based on the data range and the number of bins specified.
+# Every anime score is placed into whichever interval(bin) it belongs to.
+
+print(pd.value_counts(pd.qcut(anime_data_extracted["Score"], 2))) # qcut divides the data into equal-sized bins based on the quantiles of the data. So it will divide the data into 2 bins such that each bin contains approximately 50% of the data points. The boundary values are determined by the quantiles of the data, so they may not be equally spaced like in pd.cut().
+
+# DIFFERENCE BETWEEN CUT AND QCUT:
+# pd.cut() splits by equal interval size - bins have same width but no. of values in each bin (aka data points) may differ - use when you want fixed ranges
+# pd.qcut() splits so that each bin has equal no. of rows (data points) - even if bin/interval width becomes uneven - use when you want balanced groups
+
+# qcut is useful when you want Top 25% students, Bottom 25% customers, Income quartiles, Deciles in analytics etc. 
+# Bin splitting is especially useful in marketing analysis - ex: you can analyze each customer segment (e.g. quality customers) by dividing the customers by their total amount of purchase
+
+#-------------------------------------------------
+# AGGREGATING DATA
+# we use groupby() to group data by a certain column and then apply an aggregation function to each group like check size of group by size()
+print(anime_data_extracted.groupby('Type').size()) # gives the count of each type of anime
+print(anime_data_extracted.groupby('Type')['Score'].mean()) # gives the mean score for each type of anime
+# groupby method is an iterator, useful for looping through the resulting elements with for-loops
+# Ex: group extracts the medium type, and subdf extracts all rows in that type only
+for group, subdf in anime_data_extracted.groupby('Type'):
+    print('==========================================================')
+    print("Type:{0}".format(group))
+    print(subdf)
+# subdf = sub-dataframe => subset of the original dataframe that contains only the rows corresponding to the current group in the loop. 
+
+# agg()method to perform multiple calculations on data at once. 
+# The argument of the agg() method is a list of function names to be executed.
+
+# HIERARCHICAL GROUPING
+# can group by multiple axes by passing a list of column names to groupby() method
+print(anime_data_extracted.groupby(['Type', 'Source'])['Score'].mean()) # gives the mean score per type and source
+# if just doing groupby - the column (Ex. type) becomes the index internally
+# by setting as_index = False, the column will not become the index and will be treated as a regular column in the resulting dataframe
+print(anime_data_extracted.grouby('Type', as_index = False)['Score'].mean())
+
+# HANDLING MISSING DATA
+# There are many ways to handle missing data, the approach depends on the context and type of operations you need to perform with the data. 
+# first converting all missing values as Nan:
+anime_data = anime_data.replace('Unknown', np.nan)
+# Working with only some columns here:
+cols_to_use2 = [
+    "Name", "Score", "Type", "Premiered", "Studios", "Source",
+]
+anime_data_extracted2 = anime_data[cols_to_use2]
+
+# Listwise deletion - dropna() to remove all rows with NaNs (but significantly reduces amount of data)
+print(anime_data_extracted2.dropna())
+# Pairwise deletion - dropna() is applied after extracting the columns you want to use (so it ignores the missing column data and use only the available data )
+# fillna() - pass a value to fill in the nan
+anime_data_extracted2["Score"] = anime_data_extracted2["Score"].fillna(0) # replaces all Nan with 0 (but select value here very carefully coz it can mess up calculations)
+# can also use the mean to fill nan, called mean value assignment method, may be useful in calculations
+# Ex: df.fillna(df.mean())
+
+# ffil() - to fill the value of the previous row - useful in financial time series data processing
+# bfill() - to fill the value of the next row
+
+# HANDLING ANOMALOUS DATA (OUTLIERS)
+# Outliers are decided based on context. 
+# question is whether to leave it as it is, remove it, or replace with a plausible value - all depends on the analyst to decide based on context. The methods are same as above. 
