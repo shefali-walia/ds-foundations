@@ -3,3 +3,4 @@ MyAnimeList-Database-master/
 __pycache__/
 *.pyc
 .venv/
+air_quality_index_dataset/
