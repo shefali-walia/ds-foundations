@@ -1,6 +1,9 @@
-MyAnimeList-Database-master/
 *.ipynb
 __pycache__/
 *.pyc
 .venv/
+
+# Datasets:
+MyAnimeList-Database-master/
 air_quality_index_dataset/
+bike_sharing_dataset/
