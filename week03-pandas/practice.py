@@ -11,7 +11,7 @@ base = os.path.dirname(os.path.abspath(__file__))
 df = pd.read_csv(os.path.join(base, 'air_quality_index_dataset', 'city_day.csv'))
 print(df.head(5))
 
-df.info() # # no print needed — it prints itself
+df.info() # no print needed — it prints itself
 print(df.describe())  # needs print because internally it just returns a dataframe, it doesn't print itself.
 print(df.head().T)  # needs print because internally it just returns a dataframe, it doesn't print itself.
 
