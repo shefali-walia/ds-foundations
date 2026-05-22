@@ -120,7 +120,7 @@ df = pd.read_csv(os.path.join(base, 'bike_sharing_dataset', 'day.csv'))
 # plt.ylabel("Total Rentals", fontsize=13)
 
 # plt.xticks(fontsize = 11) # tick labels ≈ 2px smaller than axis labels
-# plt.yticks(fontsize = 11)
+# plt.yticks(fontsize = 11) # Ticks are the small labels/marks you see on the x and y axes
 # plt.grid(True)
 
 # plt.show()
@@ -147,14 +147,14 @@ Useful when:
 # Showing trends together
 # Maintaining visual consistency """
 
-plt.figure(figsize = (12,6))  # total canvas for ALL subplots combined
+# plt.figure(figsize = (12,6))  # total canvas for ALL subplots combined
 
-# First subplot (2 rows, 1 column, position 1)
-plt.subplot(2,1,1)
-plt.plot(df['cnt'])
-plt.title("Daily Rentals Over Time")
-plt.ylabel("Total Rentals")
-plt.grid(True)
+# # First subplot (2 rows, 1 column, position 1)
+# plt.subplot(2,1,1)
+# plt.plot(df['cnt'])
+# plt.title("Daily Rentals Over Time")
+# plt.ylabel("Total Rentals")
+# plt.grid(True)
 
 # # Second subplot (2 rows, 1 column, position 2)
 # plt.subplot(2,1,2)
@@ -170,14 +170,251 @@ plt.grid(True)
 # By default, matplotlib doesn't support characters outside english alphabet, so if used any other character/language in labels, it will show garbled characters in place of labels and warning messages.
 
 #-------------------------------------------------
-# ONE VARIABLE ANALYSIS
-
-# LINE PLOT
+# ONE VARIABLE ANALYSIS - LINE PLOT
 # Use plt.plot() - plots points by connecting them on anx-ycoordinate system based on two sets of data. 
 # useful when we want to see how something changes step by step. 
 # Since our dataset records bike rentals on a daily basis, a line plot is an appropriate tool to examine how rental demand evolves over time.
+# Refer to plot given by code lines 91-99
 
+# Line plot is especially useful for time-series data. 
+# Since actual dates have more information than indeces, we should use the actual date variable dteday
 
+# By default matplotlib auto-picks tick positions and labels
+# But when your x-axis is DATES, the auto ticks look messy this is why we manually control them with mdates
+# "2011-01-01" (string) => datetime(2011, 1, 1) 
+# matplotlib needs actual datetime objects to space dates correctly on axis
 
+import matplotlib.dates as mdates
+ 
+df['dteday'] = pd.to_datetime(df['dteday'])
 
+# plt.figure(figsize = (12, 5))
+# plt.plot(df['dteday'], df['cnt'])
+
+# plt.title("Dailt Bike Rentals Over Time")
+# plt.xlabel("Date")
+# plt.ylabel("Total Daily Rentals")
+
+# plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
+# plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+
+# plt.xticks(rotation = 45)
+# plt.tight_layout()
+# plt.show()
+
+"""
+# plt.gca() - "get current axes" - returns the Axes object matplotlib is currently drawing on
+- you need this when the setting you want lives INSIDE the axes object, not at the top-level plt.something() level
+
+# .xaxis and .yaxis - every Axes object has two sub-objects: .xaxis and .yaxis
+- these control everything about that axis: ticks, labels, formatting
+
+# .set_major_locator(mdates.MonthLocator())
+- LOCATOR = decides WHERE ticks are placed (the positions)
+- MonthLocator() = "place a tick at the 1st of every month"
+# other options:
+-   mdates.YearLocator()   -- one tick per year (for long timelines)
+-   mdates.WeekdayLocator() -- one tick per week
+-   mdates.DayLocator(interval=7) -- every 7 days
+
+# .set_major_formatter(mdates.DateFormatter('%Y-%m'))
+- FORMATTER = decides HOW tick labels are displayed (the text)
+- DateFormatter takes a format string, same as Python's strftime:
+- '%Y-%m'       -- "2011-01"  (year-month, what this code uses)
+- '%b %Y'       -- "Jan 2011" (more readable for presentations)
+- '%d/%m/%Y'    -- "01/01/2011" (day level detail)
+- '%b'          -- "Jan" only (when year is obvious from context)
+
+# LOCATOR sets positions, FORMATTER sets appearance - two separate jobs - you can mix and match them independently
+
+# plt.xticks(rotation=45) -  needed whenever labels are long enough to overlap each other
+- common values: 45 (diagonal), 90 (vertical), 0 (default horizontal)
+- rotation=90 saves more space but is harder to read quickly """
+
+# OBSERVATIONS/ INTERPRETATION OF THE LINE PLOT:
+# 1. Upward trend: year 2 rentals are generally higher than year 1 => growth in popularity over time
+# 2. Seasonality: demand peaks mid-year, dips at start/end of each year => repeating yearly cycle driven by weather
+# 3. Short term volatility: Sharp drops even during high demand periods => disruptions like bad weather, holidays etc.
+# SUMMARY: demand is NOT RANDOM => has structure seen in long term growht, yearly seasonality, daily noise.
+
+#-------------------------------------------------
+# ONE VARIABLE ANALYSIS - PLOTTING MULTIPLE LINES
+# We just use plt.plot twice to plot two lines in one axes (not different subplots)
+# Total demand consists of two distinct user groups: casual users and registered users. 
+# Understanding their behavior separately will allow us to identify differences in usage patterns and customer structure
+# Main Questions: 
+#   How do rental patterns differ between casual and registered users over time?
+#   Are both groups growing similarly, and do they respond differently to seasonal changes?
+
+# plt.figure(figsize = (12,5))
+
+# plt.plot(df['dteday'], df['casual'], label = "Casual Users")  # label is for legend - visible only if plt.legend called 
+# plt.plot(df['dteday'], df['registered'], label = "Registered Users")
+
+# plt.title("Casual vs Registered Bike Rentals Over Time")
+# plt.xlabel("Date")
+# plt.ylabel("Number of Rentals")
+
+# plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
+# plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+# plt.xticks(rotation = 45)
+
+# plt.legend()
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()
+
+# OBSERVATIONS/ INTERPRETATION OF THE LINE PLOT:
+# 1. Registered Dominates: registered counts consistently >> casual throughout both years => system relies primarily on recurring customers
+# 2. Both show Seasonality: same mid-year peak pattern in both groups => overall demand driven by season regardless of user type
+# 3. Growth is registered-led:  year 1 -> year 2 uplift visible in both, but stronger in registered => total demand growth = more regular customers, not more casual ones
+# SUMMARY: two structurally different user types --
+#    registered = stable, growing, predictable base
+#    casual     = seasonal, volatile, occasional
+# matters for: forecasting, pricing, marketing strategy
+
+# MOVING AVERAGE - Smooth out daily noise to reveal a clear trend in data
+df["rolling_7"] = df["cnt"].rolling(window=7).mean()
+# .rolling(window=7).mean() : 
+#   window=7  = look at 7 consecutive rows at a time
+#   .mean()   = take the average of those 7 values
+#   result    = each point becomes the avg of itself + 6 days before it
+#   creates a new column "rolling_7" in the dataframe
+#
+# WHY: daily data is noisy (spikes/drops everywhere)
+#      moving average filters that noise so the underlying trend is visible
+#      window=7 = weekly smoothing (common choice for daily data)
+
+plt.figure(figsize=(10, 5))
+
+# plotting TWO lines on the same axes — just call plt.plot() twice
+# alpha=0.4 on daily = faded, so the moving avg stands out on top
+# label= is what appears in the legend
+plt.plot(df["dteday"], df["cnt"], alpha=0.4, label="Daily")
+plt.plot(df["dteday"], df["rolling_7"], linewidth=2, label="7-day avg")
+# linewidth=2 = thicker line for the moving average (more prominent)
+plt.title("Daily Rentals and 7-Day Moving Average")
+plt.xlabel("Date")
+plt.ylabel("Total Rentals")
+
+plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+plt.xticks(rotation=45)
+
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# ANSWERS FROM THE CHART:
+# Q: Does the moving average make the trend clearer?
+# A: yes, the extreme points get smoothened out by taking average - less noise
+
+# Q: What information is lost when smoothing the data?
+# A: Short term volatilations such as daily disruptions in trend due to bad weather, holiday etc. 
+
+# Q: When would a manager prefer the smoothed version?
+# A: For calculations such as averages, identifying long-term trends, etc
+
+#-------------------------------------------------
+# ONE VARIABLE ANALYSIS - HISTOGRAM
+# Displays frequency (the nubmer of occurrences) or distribution of values in a dataset 
+# Line plot: trends over time
+# Histogram: overall shape and spead of data
+
+# Use plt.hist() to make histogram, with arguments such as bins and range
+# bins: specify no. of bins i.e. the continuous, non-overlapping intervals or their edges
+# range: to specify upper and lower range of bins
+
+# Basic histogram: 
+# plt.hist(df['cnt'])
+# plt.show()
+
+# Add number of bins - controls granularity
+# Add color and edge lines - improves readability
+# Add title and axis labels - communicate what the plot shows
+
+# 1. Increase bins
+# plt.figure(figsize = (8,5))
+# plt.hist(df['cnt'], bins =20)
+# plt.show()
+
+# 2. Add edge
+# plt.figure(figsize = (8,5))
+# plt.hist(df['cnt'], bins =20, edgecolor = 'black')
+# plt.show()
+
+# 3. Add labels and title
+# plt.figure(figsize=(8, 5))
+# plt.hist(df['cnt'], bins=20, edgecolor='black')
+# plt.title("Distribution of Daily Bike Rentals")
+# plt.xlabel("Total Daily Rentals")
+# plt.ylabel("Frequency")
+# plt.show()
+
+# Use help(plt.hist) to see all available parameters
+
+# By default - bin edges are decided automatically - but this may produce intervals that are difficult to interpret. 
+# Adjust bins by: 
+# Specifying number of bins (bins=20) =Matplotlib chooses evenly spaced edges automatically
+# Specify exact edges(bins=[0, 1000, 2000, 3000,...]) =gives full control
+
+# Defining bins manually:
+# bin_edges = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
+# plt.figure(figsize = (8,5))
+# plt.hist(df['cnt'], bins = bin_edges, edgecolor = 'black')
+# plt.title("Histogram of Daily Bike Rentals (Custom Bins)")
+# plt.xlabel("Total Daily Rentals")
+# plt.ylabel("Frequency")
+# plt.show()
+
+# Bin edges can also be generated programmatically using:
+# np.arange(start, stop, step) 
+# Example: bin_edges = np.arange(0, 9500, 500)  (till 9500 so 9000 is included)
+
+#-------------------------------------------------
+# ONE VARIABLE ANALYSIS - BOXPLOT
+# boxplot (box-and-whisker plot) provides a compact statistical summary of a numerical variable
+# It visualizes:
+# Median (center line inside the box)
+# Interquartile Range (IQR) — the middle 50% of observations (Q1 to Q3)
+# Outliers — unusually high or low observations
+
+# useful for: Detecting skewness, Identifying extreme values, Comparing distributions across groups
+# by default- vertical, set vert = False for horizontal boxplot in plt.boxplot
+plt.figure(figsize=(8, 3))
+plt.boxplot(df["cnt"], vert=False) # can add argument patch_artist=True, converts the boxes in a boxplot from simple, hollow line paths into filled, customizable shapes (or "patches")- fill the boxes with color, apply gradients, and style them individually
+
+plt.title("Boxplot of Daily Bike Rentals", fontsize=14)
+plt.xlabel("Total Daily Rentals", fontsize=12)
+
+plt.yticks([])  # remove unnecessary categorical axis
+plt.grid(axis="x", linestyle="--", alpha=0.6)
+
+plt.show()
+
+# OBSERVATIONS/ INTERPRETATION OF THE BOXPLOT:
+# MEDIAN (~4500) - middle line of the box => typical day has ~4500 rentals
+# IQR (box spans ~3000 to ~6000)- interquartile range = middle 50% of all days fall here. wide box = moderate variability in daily demand
+# WHISKERS (extend far in both directions) - show full range of non-outlier values
+# no isolated dots = no extreme outliers in this dataset
+# SUMMARY: demand is stable around the median but dispersed => staffing and bike allocation must stay flexible
+
+""" BOXPLOT ANATOMY (reference)
+
+   |----[  |  ]-------|
+   ^    ^  ^  ^       ^
+whisker Q1 Q2 Q3    whisker
+           median(Q2) in the middle
+
+# box    = IQR = Q1 to Q3 = middle 50% of data
+# median = line inside the box
+# whiskers = 1.5 * IQR beyond Q1/Q3
+# dots beyond whiskers = outliers"""
+
+#-------------------------------------------------
+# TWO VARIABLE ANALYSIS - SCATTER PLOTS
+# Numeric vs. Numeric
+
+# scatter plot is a graph that plots points on anx-ycoordinate system based on two sets of data
+# Useful for identifying: Direction of relationship (positive or negative), Strength of association, Patterns such as linearity or curvature, Outliers
 
