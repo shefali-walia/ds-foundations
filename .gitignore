@@ -7,3 +7,5 @@ __pycache__/
 MyAnimeList-Database-master/
 air_quality_index_dataset/
 bike_sharing_dataset/
+aqi_cleaned.csv
+**/*cleaned*.csv

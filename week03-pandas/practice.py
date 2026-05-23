@@ -158,3 +158,7 @@ print(df_1_2.shape)
 # 1. Time series plot of AQI by city (Week 4 — Matplotlib)
 # 2. Correlation between PM2.5 and AQI — are they redundant features?
 # 3. City-wise seasonal heatmap — which city × season combination is most dangerous?
+
+#-------------------------------------------------
+# SAVING CLEANED DATA AS CSV
+df_extracted.to_csv(os.path.join(base, 'aqi_cleaned.csv'), index=False)
