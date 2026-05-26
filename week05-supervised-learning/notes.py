@@ -124,33 +124,33 @@ import sklearn  # Scikit-learn = Machine learning library
 # LOADING AND EXTRACTING DATA:
 import requests, zipfile, io
 
-# url = "http://archive.ics.uci.edu/ml/machine-learning-databases/autos/imports-85.data"
+url = "http://archive.ics.uci.edu/ml/machine-learning-databases/autos/imports-85.data"
 
-# r = requests.get(url).content
-# auto = pd.read_csv(io.StringIO(r.decode('utf-8')), header = None)
-# # res.decode('utf-8')  - converts raw bytes to string
-# # header=None          - dataset has no column names row, so don't treat first row as headers
+r = requests.get(url).content
+auto = pd.read_csv(io.StringIO(r.decode('utf-8')), header = None)
+# res.decode('utf-8')  - converts raw bytes to string
+# header=None          - dataset has no column names row, so don't treat first row as headers
 
-# # manually assigning column names since the raw data had none
-# auto.columns = ['symboling', 'normalized-losses', 'make', 'fuel-type', 'aspiration', 'num-of-doors',
-#                             'body-style', 'drive-wheels', 'engine-location', 'wheel-base', 'length', 'width', 'height',
-#                             'curb-weight', 'engine-type', 'num-of-cylinders', 'engine-size', 'fuel-system', 'bore',
-#                             'stroke', 'compression-ratio', 'horsepower', 'peak-rpm', 'city-mpg', 'highway-mpg', 'price']
+# manually assigning column names since the raw data had none
+auto.columns = ['symboling', 'normalized-losses', 'make', 'fuel-type', 'aspiration', 'num-of-doors',
+                            'body-style', 'drive-wheels', 'engine-location', 'wheel-base', 'length', 'width', 'height',
+                            'curb-weight', 'engine-type', 'num-of-cylinders', 'engine-size', 'fuel-system', 'bore',
+                            'stroke', 'compression-ratio', 'horsepower', 'peak-rpm', 'city-mpg', 'highway-mpg', 'price']
 
-# print("Data shape: ", auto.shape) # (205,26)
-# print(auto.head())
+print("Data shape: ", auto.shape) # (205,26)
+print(auto.head())
 
-# # TARGET VARIABLE: PRICE
-# # EXPLANATORY VARIABLES: HORSEPOWER, WIDTH, HEIGHT (we chose 3 to simplify the task)
+# TARGET VARIABLE: PRICE
+# EXPLANATORY VARIABLES: HORSEPOWER, WIDTH, HEIGHT (we chose 3 to simplify the task)
 
-# # DATA PREPARATION:
+# DATA PREPARATION:
 
-# # convert '?' entries to missing values and then remove the rows containing these missing values
-# auto = auto[['price', 'horsepower', 'width', 'height']]
-# print(auto.isin(['?']).sum())
-# # we can see there are 4 '?' in price column and 2 in horsepower, 0 in height and width
-# auto = auto.replace('?', np.nan).dropna()
-# print("Data shape: ", auto.shape) # (199,4) 
+# convert '?' entries to missing values and then remove the rows containing these missing values
+auto = auto[['price', 'horsepower', 'width', 'height']]
+print(auto.isin(['?']).sum())
+# we can see there are 4 '?' in price column and 2 in horsepower, 0 in height and width
+auto = auto.replace('?', np.nan).dropna()
+print("Data shape: ", auto.shape) # (199,4) 
 
 # # Check data types before converting (need numeric data only)
 # print("Data types: \n", auto.dtypes)
@@ -245,26 +245,26 @@ import requests, zipfile, io
 # construct a model to predict whether an individual's income exceeds $50K based on personal data such as age, gender, and occupation
 
 # LOADING AND ETRACTING DATA:
-url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
-r = requests.get(url).content
+# url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
+# r = requests.get(url).content
 
-adult = pd.read_csv(io.StringIO(r.decode('utf-8')), header = None)
-adult.columns =['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status',
-                             'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week',
-                             'native-country', 'flg-50K']
-print("Data shape: ", adult.shape)
-print(adult.head())
+# adult = pd.read_csv(io.StringIO(r.decode('utf-8')), header = None)
+# adult.columns =['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status',
+#                              'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week',
+#                              'native-country', 'flg-50K']
+# print("Data shape: ", adult.shape)
+# print(adult.head())
 
-print('Number of defects:{}'.format(adult.isnull().sum().sum()))  # {} is placeholder for what is after .format
+# print('Number of defects:{}'.format(adult.isnull().sum().sum()))  # {} is placeholder for what is after .format
 
 # DATA PREPARATION:
 # check how many rows contain <=50K and >50K
-print(adult.groupby('flg-50K').size())
+# print(adult.groupby('flg-50K').size())
 # 24,720 rows with <=50K and 7,841 rows with >50K
 
 # adding a column named 'fin_flg' and set a flag of 1 for rows with >50K and 0 for others
-adult['fin_flg'] = adult['flg-50K'].map(lambda x: 1 if x == ' >50K' else 0)
-print(adult.groupby('fin_flg').size())
+# adult['fin_flg'] = adult['flg-50K'].map(lambda x: 1 if x == ' >50K' else 0)
+# print(adult.groupby('fin_flg').size())
 
 # MODEL CONSTRUCTION AND EVALUATION:
 # Explanatory variables: age, fnlwgt, education-num, capital-gain, and capital-loss
@@ -312,27 +312,269 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
-X = adult[['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss']]
-y = adult['fin_flg']
+# X = adult[['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss']]
+# y = adult['fin_flg']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
-sc = StandardScaler()  
-sc.fit(X_train)           # learn mean and std FROM TRAINING DATA ONLY
-X_train_std = sc.transform(X_train)  # apply to train
-X_test_std = sc.transform(X_test)    # apply same scale to test
+# sc = StandardScaler()  
+# sc.fit(X_train)           # learn mean and std FROM TRAINING DATA ONLY
+# X_train_std = sc.transform(X_train)  # apply to train
+# X_test_std = sc.transform(X_test)    # apply same scale to test
 
-# CRITICAL: never fit scaler on test data - would leak test info into training process
-# fit = learn stats. transform = apply stats. only learn from training data, always.
+# # CRITICAL: never fit scaler on test data - would leak test info into training process
+# # fit = learn stats. transform = apply stats. only learn from training data, always.
 
-model = LogisticRegression()
-model.fit(X_train_std, y_train)
+# model = LogisticRegression()
+# model.fit(X_train_std, y_train)
 
-print('Accuracy (train):{:.3f}'.format(model.score(X_train_std, y_train)))
-print('Accuracy (test):{:.3f}'.format(model.score(X_test_std, y_test)))
+# print('Accuracy (train):{:.3f}'.format(model.score(X_train_std, y_train)))
+# print('Accuracy (test):{:.3f}'.format(model.score(X_test_std, y_test)))
 
 # RESULTS:
 # before scaling: 0.796 / 0.799
 # after scaling:  0.811 / 0.810  => scaling improved accuracy
 # By aligning the scales of the explanatory variables, machine learning algorithms can perform better.
 # only the training data is used to calculate the mean and standard deviation. Test data is considered as unknown data that will be obtained in the future, so it cannot be used to evaluate the model.
+
+#-------------------------------------------------
+# DECISION TREES
+# Method of classifying data by repeatedly branching based on conditions of each attribute to reach a certain goal
+# target variable categorical - classification tree
+# target variable numerical - regression tree
+
+# By repeatedly making decisions based on different attributes of the data, the tree divides the data into categories (e.g., poisonous or edible mushrooms). 
+# Various routes can lead to the target (such as identifying poisonous mushrooms), 
+# and these routes are represented in a tree structure, which is why it's called a decision tree.
+
+# LOADING AND READING DATA
+url = "http://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data"
+r = requests.get(url).content
+
+mushroom = pd.read_csv(io.StringIO(r.decode('utf-8')), header = None)
+mushroom.columns = ['classes', 'cap_shape', 'cap_surface', 'cap_color', 'bruises', 'odor',
+                             'gill_attachment','gill_spacing','gill_size','gill_color','stalk_shape',
+                             'stalk_root','stalk_surface_above_ring','stalk_surface_below_ring',
+                             'stalk_color_above_ring','stalk_color_below_ring','veil_type','veil_color',
+                             'ring_number','ring_type','spore_print_color','population', 'habitat']
+
+print(mushroom.head())
+print("Data shape: ", mushroom.shape) #(8124, 23)
+print('Number of missing values: {}'.format(mushroom.isnull().sum().sum()))  # No missing values found
+
+# TARGET VARIABLE: Classes (p = poisonous, e = edible)
+# EXPLANATORY VARIABLES: (We choose 4 here) gill_color, gill_attachment, odor, and cap_color  - all catergorical - have to convert to numeric for decision trees
+
+# DUMMY ENCODING: 
+# converting categorical variables, such as a gender variable with values male or female, into two separate columns: a 'male' column and a 'female' column. 
+# if the gender is male, the 'male' column will be 1, and the female column will be 0 
+# this is also known as one-hot encoding
+# use get_dummies function
+
+mushroom_dummy = pd.get_dummies(mushroom[['gill_color', 'gill_attachment', 'odor', 'cap_color']], dtype='int')
+print(mushroom_dummy.head())
+# each new variable represents a combination of the original variable name and its value
+# convert values in the classes variable to 1 if they are p and 0 otherwise , adding this new variable as flg
+mushroom_dummy['flg'] = mushroom['classes'].map(lambda x: 1 if x =='p' else 0)
+
+""" ENTROPY: MEASURE OF IMPURITY
+# Impurity represents the state of differentiation (e.g., distinguishing between poisonous and edible mushrooms)
+# High impurity means the categories are not well separated.
+# Decision trees are algorithms that assess which of the variables provides the most useful split for classification, using impurity as a criterion for determining the quality of each split. 
+
+# there are two categories (poisonous or edible), with the proportion of edible mushrooms represented by  p1  and the proportion of poisonous mushrooms by  p2
+# Example:
+# consider a branching condition in which both poisonous and edible mushrooms are equally represented i.e. p1=p2=0.5
+# then entropy = - (0.5 * np.log2(0.5) + 0.5 * np.log2(0.5)) = 1 => maximum randomness
+# Since the dataset contains an equal proportion (0.5) of both poisonous and non-poisonous mushrooms, it indicates a completely unidentifiable state.
+
+# entropy values near 1.0 indicate an unidentifiable state, whereas values close to 0.0 suggest a well-identifiable state
+# binary classification => p1 = 1- p2
+# Graph of entropy - downward parabola between 0 to 1 (in both axes i.e. Q1, vertex = (0.5,1))
+"""
+
+print(mushroom_dummy.groupby('flg')['flg'].count())
+# non-poisonous (0) = 4208 => proportion = 4208/8124 = 0.518
+# poisonous (1) = 3916 => proportion = 3196/8124 = 0.482
+entropy_init = - (0.518 * np.log2(0.518) + 0.482 * np.log2(0.482))
+print('Initial entropy of the poisonous mushroom data: {:.3f}'.format(entropy_init))
+# initial entropy = 0.999 - now have to reduce it by branching using explanatory variables
+
+# Information gain is an indicator that shows how much entropy has decreased before and after a data split using a particular variable
+# Info. gain = Parent dataset entropy - Σ{(child dataset size / parent dataset size) × child dataset entropy
+# The larger this value, the greater the reduction in entropy between the parent and child datasets, indicating a more useful splitting condition
+
+# using two variables- cap_color_c and gill_color_b here to compare which is more useful as a split condition using information gain
+mushroom_dummy.groupby(['cap_color_c', 'flg'])['flg'].count().unstack()
+
+# Entropy when cap_color is not `c`
+p1 = 4176 / (4176 + 3904)
+p2 = 1 - p1
+entropy_c0 = - (p1 * np.log2(p1) + p2 * np.log2(p2))
+print('entropy_c0: {:.3f}'.format(entropy_c0))  
+# result - 0.999
+
+# Entropy when cap_color is 'c'
+p1 = 32 / (32 + 12)
+p2 = 1 - p1
+entropy_c1 = - (p1 * np.log2(p1) + p2 * np.log2(p2))
+print('entropy_c1: {:.3f}'.format(entropy_c1))
+# result - 0.845
+
+entropy_after = (4176 + 3904) / 8124 * entropy_c0 + (32 + 12) / 8124 * entropy_c1
+print('Average entropy after data split: {:.3f}'.format(entropy_after))
+
+print('Information gain from splitting the variable cap_color: {:.3f}'.format(entropy_init - entropy_after))
+# Info. gain = 0.001 => the entropy has not decreased significantly, 
+# and we can quantitatively conclude that whether cap_color is c or not is not a very useful splitting condition
+
+mushroom_dummy.groupby(['gill_color_b', 'flg'])['flg'].count().unstack()
+# definition of entropy strictly requires the calculation to be done for non-empty categories. 
+# Since there are no samples where the flg variable is 0 when gill_color is b, we do not include the term  p1×np.log2(p1)  in the sum for the entropy calculation.
+
+# Entropy when gill_color is not b
+p1 = 4208 / (4208 + 2188)
+p2 = 1 - p1
+entropy_b0 = - (p1 * np.log2(p1) + p2 * np.log2(p2))
+
+# Entropy when gill_color is b
+p1 = 0 / (0 + 1728)
+p2 = 1 - p1
+entropy_b1 = - (p2 * np.log2(p2))
+
+entropy_after = (4208 + 2188) / 8124 * entropy_b0 + (0 + 1728) / 8124 * entropy_b1
+print('Information gain from splitting by gill_color: {:.3f}'.format(entropy_init - entropy_after))
+# result: Info. gain = 0.269 => more beneficial branching condition
+
+# A decision tree splits the data based on the splitting condition with the highest information gain 
+# and continues to explore splitting conditions that maximize information gain at each subsequent level
+# Other measures of impurity: Gini impurity, classification error
+# In the case of decision trees, model complexity is determined by the number of splits. 
+# More splits = more complex model
+
+# BUILDING DECISION TREE MODEL
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+
+X = mushroom_dummy.drop('flg', axis= 1)
+y = mushroom_dummy['flg']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 0)
+
+model = DecisionTreeClassifier(criterion = 'entropy', max_depth = 5, random_state = 0)
+model.fit(X_train, y_train)
+
+print('Accuracy(train):{:.3f}'.format(model.score(X_train, y_train)))
+print('Accuracy(test):{:.3f}'.format(model.score(X_test, y_test)))
+# results: train=0.991, test=0.992 => near perfect, mushroom data is very clean
+
+# criterion='entropy' - uses entropy as split condition (measures impurity)
+# max_depth=5         - limits how deep the tree grows
+# no standardization needed for decision trees
+# Decision tree visualisation (needs pydotplus + graphviz)
+
+#-------------------------------------------------
+# OVERFITTING
+# When a model clings too tightly to training data, fitting noise rather than true patterns
+# This leads to high accuracy on training data but poor performance on unseen data
+# Techniques to mitigate: 
+# 1. Increasing training data - harder to memorize, forced to generalize
+# 2. Cross-validation - better evaluation
+# 3. Early stopping - stop training before model over-memorizes
+# 4. Regularization - penalizes complexity
+
+# decision tree example:
+# max_depth=5  - controlled, less overfit
+# max_depth=50 - memorizes every training row, fails on test data
+
+# If model is too simple or hasn't been trained enough, it missed imp. patterns - UNDERFITTING
+
+#-------------------------------------------------
+# REGULARIZED REGRESSION: LASSO AND RIDGE
+# PROBLEM with regular regression:
+# large coefficients = complex model = overfits training data
+
+# SOLUTION: add a regularization term to the loss function
+# loss = prediction error + complexity penalty
+# this forces coefficients to stay small = simpler model = better generalization
+# Regularization = techniques that generally aim to reduce the complexity of a model
+
+# LASSO (q=1) => absolute value of coefficients as penalty
+# - can shrink some coefficients to exactly 0
+# - effectively removes useless features
+# - good for feature selection
+
+# RIDGE (q=2) => squared value of coefficients as penalty
+# - shrinks all coefficients but rarely to zero
+# - good when all features matter a little
+
+# lambda => regularization parameter, controls how hard the penalty hits
+# high lambda => simpler model, more regularization
+# low lambda  => closer to regular regression
+
+from sklearn.linear_model import Ridge, LinearRegression
+from sklearn.model_selection import train_test_split
+
+X = auto.drop('price', axis=1)
+y = auto['price']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+
+# creating both multiple regression model and ridge regression model and comparing their results
+linear = LinearRegression()
+ridge = Ridge(random_state=0)
+
+for model in [linear, ridge]:    # loops through both models and runs the same code on each
+    model.fit(X_train, y_train)
+    print('{} (train):{:.6f}'.format(model.__class__.__name__ , model.score(X_train, y_train)))
+    print('{} (test):{:.6f}'.format(model.__class__.__name__ , model.score(X_test, y_test)))
+# __class__ => the class of the object (LinearRegression or Ridge)
+# __name__ => gets the name as a string
+# so it auto-prints "LinearRegression" or "Ridge" without coding it
+
+# Result: Both have very similar performance, but as a trend, the linear regression model has a higher accuracy on the training data,
+# while the Ridge regression model outperforms on the test data
+# Ridge test score slightly higher => regularization helped generalization
+
+# IMP: sklearn LogisticRegression includes Ridge regularization by default
+
+#-------------------------------------------------
+# k-NEAREST NEIGHBOURS (k-NN)
+# AKA lazy learning or memory-based learning, as  it memorizes the training data directly without explicit training
+# HOW IT WORKS:
+# - no actual training, just memorizes all data points
+# - for a new point, find k closest neighbors in training data
+# - majority class among those k neighbors = prediction
+
+# k => number of neighbors to look at
+# small k => complex boundary, overfits (memorizes training data)
+# large k => smoother boundary, may underfit
+# optimal k => where train and test accuracy converge (k=6-8 in this example)
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.datasets import load_breast_cancer
+
+cancer = load_breast_cancer()
+
+X_train, X_test, y_train, y_test = train_test_split(
+    cancer.data, cancer.target, stratify=cancer.target, random_state=0)
+# stratify => keeps same class ratio in both train and test splits
+
+# loop through k=1 to 20, store accuracy at each k
+training_accuracy = []
+test_accuracy = []
+
+for n_neighbors in range(1, 21):
+    model = KNeighborsClassifier(n_neighbors=n_neighbors)
+    model.fit(X_train, y_train)
+    training_accuracy.append(model.score(X_train, y_train))
+    test_accuracy.append(model.score(X_test, y_test))
+
+# plot to visually find optimal k
+plt.plot(range(1, 21), training_accuracy, label='Training')
+plt.plot(range(1, 21), test_accuracy, label='Test')
+plt.ylabel('Accuracy')
+plt.xlabel('n_neighbors')
+plt.legend()
+plt.show()
+# RESULT: k=6-8 is optimal, train and test accuracy converge
+# for regression tasks => KNeighborsRegressor (same logic, predicts number)
