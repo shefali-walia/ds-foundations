@@ -152,67 +152,67 @@ print(auto.isin(['?']).sum())
 auto = auto.replace('?', np.nan).dropna()
 print("Data shape: ", auto.shape) # (199,4) 
 
-# # Check data types before converting (need numeric data only)
-# print("Data types: \n", auto.dtypes)
-# # price and horsepower are object type, not numeric so have to convert them:
-# auto = auto.assign(price = pd.to_numeric(auto.price))  # can add errors= 'coerce' here but we already removed '?' data so not needed othwerise it would have thrown error
-# auto = auto.assign(horsepower = pd.to_numeric(auto.horsepower))
-# # .assign() returns a new dataframe with that column replaced
-# print("Data types after conversion: \n", auto.dtypes)
+# Check data types before converting (need numeric data only)
+print("Data types: \n", auto.dtypes)
+# price and horsepower are object type, not numeric so have to convert them:
+auto = auto.assign(price = pd.to_numeric(auto.price))  # can add errors= 'coerce' here but we already removed '?' data so not needed othwerise it would have thrown error
+auto = auto.assign(horsepower = pd.to_numeric(auto.horsepower))
+# .assign() returns a new dataframe with that column replaced
+print("Data types after conversion: \n", auto.dtypes)
 
-# # CORRELATION CHECK:
-# print(auto.corr())
+# CORRELATION CHECK:
+print(auto.corr())
 
-# # Observations: 
-# # horsepower and width have somewhat correlation with each other ~ 0.61
-# # horsepower and width have high correlation with price (0.81 and 0.75 respectively)
-# # height has lower correlation with price (0.13)
+# Observations: 
+# horsepower and width have somewhat correlation with each other ~ 0.61
+# horsepower and width have high correlation with price (0.81 and 0.75 respectively)
+# height has lower correlation with price (0.13)
 
-# # Interpretation:
-# # highly correlated variables as explanatory variables in multiple regression can lead to multi-collinearity
+# Interpretation:
+# highly correlated variables as explanatory variables in multiple regression can lead to multi-collinearity
 
-# # Multi-collinearity is a phenomenon where high correlation between variables causes an increase in the variance of regression coefficients, leading to a loss of coefficient significance
-# # To avoid this, typically only a representative variable from groups of highly correlated variables is used
-# # But here we're using all three just for experiment
+# Multi-collinearity is a phenomenon where high correlation between variables causes an increase in the variance of regression coefficients, leading to a loss of coefficient significance
+# To avoid this, typically only a representative variable from groups of highly correlated variables is used
+# But here we're using all three just for experiment
 
-# # MODEL BUILDING AND EVALUATION:
-# # Import for data splitting (training data and test data)
-# from sklearn.model_selection import train_test_split
-# # This function randomly splits the data into two parts. 
-# # The split ratio is determined by test_size. Here, with test_size set to 0.5, the data is divided equally
+# MODEL BUILDING AND EVALUATION:
+# Import for data splitting (training data and test data)
+from sklearn.model_selection import train_test_split
+# This function randomly splits the data into two parts. 
+# The split ratio is determined by test_size. Here, with test_size set to 0.5, the data is divided equally
 
-# # Import for building the multiple regression model
-# from sklearn.linear_model import LinearRegression
+# Import for building the multiple regression model
+from sklearn.linear_model import LinearRegression
 
-# # X = explanatory variables (everything except target)
-# # y = target variable (what we're predicting)
-# X = auto.drop('price', axis = 1)
-# y = auto['price']
+# X = explanatory variables (everything except target)
+# y = target variable (what we're predicting)
+X = auto.drop('price', axis = 1)
+y = auto['price']
 
-# # split data into training and test sets
-# # test_size=0.5  - 50/50 split
-# # random_state=0 (V.IMP) - fixes randomness so results are reproducible every run - split is consistent each time the code is run
-# # If random_state isn’t set to a fixed number, rows may be categorized into either training or test data differently with each execution, resulting in varying outcomes
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
+# split data into training and test sets
+# test_size=0.5  - 50/50 split
+# random_state=0 (V.IMP) - fixes randomness so results are reproducible every run - split is consistent each time the code is run
+# If random_state isn’t set to a fixed number, rows may be categorized into either training or test data differently with each execution, resulting in varying outcomes
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
 
-# # build and train the model
-# model = LinearRegression()   # create model instance
-# model.fit(X_train, y_train)  # train on training data only
+# build and train the model
+model = LinearRegression()   # create model instance
+model.fit(X_train, y_train)  # train on training data only
 
-# # evaluate — coefficient of determination (R²)
-# # R² = 1.0 = perfect predictions
-# # R² = 0.0 = model is useless
-# # train score vs test score gap - tells if model is overfitting
-# print('Coefficient of determination (train):{:.3f}'.format(model.score(X_train, y_train)))
-# print('Coefficient of determination (test):{:.3f}'.format(model.score(X_test, y_test)))
+# evaluate — coefficient of determination (R²)
+# R² = 1.0 = perfect predictions
+# R² = 0.0 = model is useless
+# train score vs test score gap - tells if model is overfitting
+print('Coefficient of determination (train):{:.3f}'.format(model.score(X_train, y_train)))
+print('Coefficient of determination (test):{:.3f}'.format(model.score(X_test, y_test)))
 
-# # regression coefficients (how much each feature affects price)
-# # intercept = baseline value when all features = 0
-# print('\nRegression coefficients\n{}'.format(pd.Series(model.coef_, index=X.columns)))
-# # model.coef_ - array of numbers like [200.3, -50.1, 88.4, ...] (one per feature)
-# # pd.Series(..., index=X.columns) - wraps those numbers into a Series with column names as labels
-# print('Intercept: {:.3f}'.format(model.intercept_))
-# # model.intercept_ - the b value in y = w1x1 + w2x2 + ... + b
+# regression coefficients (how much each feature affects price)
+# intercept = baseline value when all features = 0
+print('\nRegression coefficients\n{}'.format(pd.Series(model.coef_, index=X.columns)))
+# model.coef_ - array of numbers like [200.3, -50.1, 88.4, ...] (one per feature)
+# pd.Series(..., index=X.columns) - wraps those numbers into a Series with column names as labels
+print('Intercept: {:.3f}'.format(model.intercept_))
+# model.intercept_ - the b value in y = w1x1 + w2x2 + ... + b
 
 # RESULTS:
 # train=0.733, test=0.737 => no overfitting, good generalization
@@ -245,26 +245,26 @@ print("Data shape: ", auto.shape) # (199,4)
 # construct a model to predict whether an individual's income exceeds $50K based on personal data such as age, gender, and occupation
 
 # LOADING AND ETRACTING DATA:
-# url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
-# r = requests.get(url).content
+url = "http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
+r = requests.get(url).content
 
-# adult = pd.read_csv(io.StringIO(r.decode('utf-8')), header = None)
-# adult.columns =['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status',
-#                              'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week',
-#                              'native-country', 'flg-50K']
-# print("Data shape: ", adult.shape)
-# print(adult.head())
+adult = pd.read_csv(io.StringIO(r.decode('utf-8')), header = None)
+adult.columns =['age', 'workclass', 'fnlwgt', 'education', 'education-num', 'marital-status',
+                             'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week',
+                             'native-country', 'flg-50K']
+print("Data shape: ", adult.shape)
+print(adult.head())
 
-# print('Number of defects:{}'.format(adult.isnull().sum().sum()))  # {} is placeholder for what is after .format
+print('Number of defects:{}'.format(adult.isnull().sum().sum()))  # {} is placeholder for what is after .format
 
 # DATA PREPARATION:
 # check how many rows contain <=50K and >50K
-# print(adult.groupby('flg-50K').size())
+print(adult.groupby('flg-50K').size())
 # 24,720 rows with <=50K and 7,841 rows with >50K
 
 # adding a column named 'fin_flg' and set a flag of 1 for rows with >50K and 0 for others
-# adult['fin_flg'] = adult['flg-50K'].map(lambda x: 1 if x == ' >50K' else 0)
-# print(adult.groupby('fin_flg').size())
+adult['fin_flg'] = adult['flg-50K'].map(lambda x: 1 if x == ' >50K' else 0)
+print(adult.groupby('fin_flg').size())
 
 # MODEL CONSTRUCTION AND EVALUATION:
 # Explanatory variables: age, fnlwgt, education-num, capital-gain, and capital-loss
@@ -273,16 +273,16 @@ print("Data shape: ", auto.shape) # (199,4)
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
-# X = adult[['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss']]
-# y = adult['fin_flg']
+X = adult[['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss']]
+y = adult['fin_flg']
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
 
-# model = LogisticRegression()
-# model.fit(X_train, y_train)
+model = LogisticRegression()
+model.fit(X_train, y_train)
 
-# print('Accuracy (train):{:.3f}'.format(model.score(X_train, y_train)))
-# print('Accuracy (test):{:.3f}'.format(model.score(X_test, y_test)))
+print('Accuracy (train):{:.3f}'.format(model.score(X_train, y_train)))
+print('Accuracy (test):{:.3f}'.format(model.score(X_test, y_test)))
 
 # RESULTS:
 # train: 0.796, test: 0.799 - ~80% accuracy, test slightly higher than train = no overfitting
@@ -308,28 +308,27 @@ from sklearn.model_selection import train_test_split
 # result:  0 = mean, 1 = one std above mean
 # all features on same scale, units removed
 
-# Importing the class for standardization
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
-# X = adult[['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss']]
-# y = adult['fin_flg']
+X = adult[['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss']]
+y = adult['fin_flg']
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
-# sc = StandardScaler()  
-# sc.fit(X_train)           # learn mean and std FROM TRAINING DATA ONLY
-# X_train_std = sc.transform(X_train)  # apply to train
-# X_test_std = sc.transform(X_test)    # apply same scale to test
+sc = StandardScaler()  
+sc.fit(X_train)           # learn mean and std FROM TRAINING DATA ONLY
+X_train_std = sc.transform(X_train)  # apply to train
+X_test_std = sc.transform(X_test)    # apply same scale to test
 
-# # CRITICAL: never fit scaler on test data - would leak test info into training process
-# # fit = learn stats. transform = apply stats. only learn from training data, always.
+# CRITICAL: never fit scaler on test data - would leak test info into training process
+# fit = learn stats. transform = apply stats. only learn from training data, always.
 
-# model = LogisticRegression()
-# model.fit(X_train_std, y_train)
+model = LogisticRegression()
+model.fit(X_train_std, y_train)
 
-# print('Accuracy (train):{:.3f}'.format(model.score(X_train_std, y_train)))
-# print('Accuracy (test):{:.3f}'.format(model.score(X_test_std, y_test)))
+print('Accuracy (train):{:.3f}'.format(model.score(X_train_std, y_train)))
+print('Accuracy (test):{:.3f}'.format(model.score(X_test_std, y_test)))
 
 # RESULTS:
 # before scaling: 0.796 / 0.799
@@ -578,3 +577,177 @@ plt.legend()
 plt.show()
 # RESULT: k=6-8 is optimal, train and test accuracy converge
 # for regression tasks => KNeighborsRegressor (same logic, predicts number)
+
+#-------------------------------------------------
+# SUPPORT VECTOR MACHINES (SVM)
+# - finds the boundary line between classes
+# - not just any line => the one that MAXIMIZES the margin
+# - margin => distance between boundary and closest points of each class
+# - support vectors => the data points closest to the boundary (they define it)
+# - wider margin => better generalization
+# Example: drawing a road between two neighborhoods
+# SVM draws it as wide as possible so neither side is too close to the edge
+
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import train_test_split
+
+cancer = load_breast_cancer()
+
+X_train, X_test, y_train, y_test = train_test_split(
+    cancer.data, cancer.target, stratify = cancer.target, random_state=0)
+
+model = LinearSVC()
+model.fit(X_train, y_train)
+
+# WITHOUT scaling => lower accuracy
+# WITH scaling (StandardScaler) => noticeable improvement
+# SVM is sensitive to feature scale, always standardize for SVM
+
+sc = StandardScaler()
+sc.fit(X_train)
+X_train_std = sc.transform(X_train)
+X_test_std = sc.transform(X_test)
+
+model = LinearSVC()
+model.fit(X_train_std, y_train)
+
+print('Accuracy (train):{:.3f}'.format(model.score(X_train_std, y_train)))
+print('Accuracy (test):{:.3f}'.format(model.score(X_test_std, y_test)))
+
+# SVM MAY BE HARD TO INTERPRET => coefficients don't have simple meaning like regression
+# black box model => not ideal for public sector / explainability-required projects
+# good accuracy but use Decision Trees or Logistic Regression when explanation needed
+
+#-------------------------------------------------
+# HOLDOUT METHOD AND CROSS VALIDATION
+
+# HOLDOUT METHOD 
+# - split data into train and test once, randomly
+# - problem 1: results depend on HOW you split (lucky/unlucky split)
+# - problem 2: less training data available
+# - fine for large datasets, unreliable for small ones
+
+# K-FOLD CROSS-VALIDATION (solution)
+# - split data into k equal folds
+# - train on k-1 folds, validate on 1 fold
+# - repeat k times so every fold gets a turn as validation
+# - final score = average of all k scores
+# - uses ALL data for training across iterations
+
+# LEAVE-ONE-OUT => special case where k = number of data points
+# - used when dataset is very small
+
+from sklearn.datasets import load_breast_cancer
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import cross_val_score
+
+cancer = load_breast_cancer()
+
+tree = DecisionTreeClassifier(criterion = 'entropy', max_depth = 3, random_state= 0)
+scores = cross_val_score(tree, cancer.data, cancer.target, cv=5)
+
+print('Cross validation scores: {}'.format(scores))
+print('Cross validation scores: {:.3f}+-{:.3f}'.format(scores.mean(), scores.std()))
+
+# scores.mean() => overall performance
+# scores.std()  => consistency across folds (high std = unstable model)
+# if std is large => consider picking model based on mean - std, not just mean
+
+#-------------------------------------------------
+# HYPERPARAMETER AND GRID SEARCH
+
+# HYPERPARAMETERS => settings you choose BEFORE training
+# decision tree => max_depth
+# ridge regression => lambda (regularization strength)
+# SVM => gamma, C
+# different from parameters (weights/coefficients) which model learns itself
+
+# GRID SEARCH => try every combination of hyperparameters, pick the best
+
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+
+cancer = load_breast_cancer()
+
+X_train, X_test, y_train, y_test = train_test_split(
+    cancer.data, cancer.target, stratify=cancer.target, random_state=0)
+
+# manually:
+scores= {}
+for gamma in np.logspace(-3, 2, num= 6):     # [0.001, 0.01, 0.1, 1, 10, 100]
+    for C in np.logspace(-3, 2, num= 6):
+        svm = SVC(gamma = gamma, C = C)
+        svm.fit(X_train, y_train)
+        scores[(gamma,C)] = svm.score(X_test, y_test)
+
+scores = pd.Series(scores) 
+
+print('Best score: {:.2f}'.format(scores.max()))
+print('Parameters (gamma, C) for the best score: {}'.format(scores.idxmax()))
+# Result: best score= 0.91 at gamma=0.001, C=1.0
+
+# Display heatmap, Gamma on the vertical axis, C on the horizontal axis
+sns.heatmap(scores.unstack())
+plt.show()
+# heatmap shows most gamma/C combinations fail (near 0.65)
+# only gamma=0.001 with C>=1.0 produces good results (~0.90)
+# grid search without visualization => can miss this pattern
+
+# GRIDSEARCHCV => sklearn's built-in, uses cross-validation automatically
+from sklearn.model_selection import GridSearchCV
+
+# data splitting same as above
+param_grid = {
+    'C': np.logspace(-3, 2, num=6),
+    'gamma': np.logspace(-3, 2, num=6)
+}
+
+gs = GridSearchCV(
+    estimator=SVC(),    # The machine learning algorithm to use
+    param_grid=param_grid,  # The range of hyperparameters to search
+    cv=5)    # Number of splits for cross-validation
+gs.fit(X_train, y_train)
+
+print('Best CV score: {:.3f}'.format(gs.best_score_))    # 0.93
+print('Best params: {}'.format(gs.best_params_))
+print('Test score: {:.3f}'.format(gs.score(X_test, y_test)))  # 0.909
+# CV score (0.93) close to test score (0.909) => no overfitting
+
+# alternatives: RandomizedSearchCV, Bayesian optimization (Hyperopt)
+
+#-------------------------------------------------
+# SUMMARY 
+# CORE WORKFLOW (same for every algorithm):
+# X, y => train_test_split => model.fit(X_train) => model.score(X_test) => model.predict(new_data)
+
+# ALGORITHMS COVERED + WHEN TO USE:
+# Multiple Regression    => predict numbers, interpretability needed, baseline model
+# Logistic Regression    => binary classification, need to explain coefficients
+# Lasso                  => regression + feature selection (removes useless features)
+# Ridge                  => regression + all features matter + overfitting risk
+# Decision Tree          => classification/regression, need to explain to non-technical
+# k-NN                   => small datasets, simple baseline, no training time
+# SVM                    => high accuracy needed, don't need to explain why
+
+# QUICK DECISION:
+# predicting a number?        => regression family (Linear, Ridge, Lasso)
+# predicting a category?      => classification family (Logistic, Tree, k-NN, SVM)
+# need to explain to manager? => Linear Reg, Logistic Reg, Decision Tree
+# black box ok, need accuracy? => SVM, (Random Forest, Gradient Boosting - week 6+)
+# small dataset?              => k-NN, cross-validation over holdout
+# many features, some useless? => Lasso
+
+# KEY RULES:
+# always fit scaler on train data only
+# always set random_state for reproducibility
+# train score >> test score => overfitting
+# use cross-validation over holdout for small datasets
+# use GridSearchCV to find best hyperparameters
+
+# ALGORITHMS THAT NEED SCALING: Logistic Regression, SVM, k-NN
+# ALGORITHMS THAT DON'T:        Decision Trees, Random Forests
+
+# SMART CITY ANGLE:
+# regression => energy demand forecasting, AQI prediction (DEWA, Masdar)
+# classification => land use, fault detection, anomaly alerts (RTA, Smart Dubai)
+# explainability matters in govt projects => prefer Tree/Logistic over SVM
