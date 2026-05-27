@@ -41,23 +41,23 @@ print(df_use.corr())  # Correlation check
 # can lead to multi-collinearity but here we're using for practice
 
 # BUILDING MODEL:
-X = df_use.drop('AQI', axis = 1)
-y = df_use['AQI']
+# X = df_use.drop('AQI', axis = 1)
+# y = df_use['AQI']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
 
-model = LinearRegression()
-model.fit(X_train, y_train)
+# model = LinearRegression()
+# model.fit(X_train, y_train)
 
-# Coefficient of determination (R^2)
-print(f"Coefficient of Determination (train) = {model.score(X_train, y_train):.3f}")
-print(f"Coefficient of Determination (test) = {model.score(X_test, y_test):.3f}")
+# # Coefficient of determination (R^2)
+# print(f"Coefficient of Determination (train) = {model.score(X_train, y_train):.3f}")
+# print(f"Coefficient of Determination (test) = {model.score(X_test, y_test):.3f}")
 
-# Regression coefficents
-print(f"Regression Coefficients: \n {pd.Series(model.coef_, index = X.columns)}")
+# # Regression coefficents
+# print(f"Regression Coefficients: \n {pd.Series(model.coef_, index = X.columns)}")
 
-# Intercept
-print(f"Intercept: {model.intercept_ :.3f}")
+# # Intercept
+# print(f"Intercept: {model.intercept_ :.3f}")
 
 # RESULT:
 # train = 0.703, test = 0.727 => close enough => no overfitting
@@ -76,16 +76,125 @@ print(f"Intercept: {model.intercept_ :.3f}")
 # RIDGE VS. LINEAR - DOES REGULARISATION HELP?
 
 # X, y same as before - only looping through both models here
-X = df_use.drop('AQI', axis = 1)
-y = df_use['AQI']
+# X = df_use.drop('AQI', axis = 1)
+# y = df_use['AQI']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
 
-linear = LinearRegression()
-ridge = Ridge(random_state = 0)
+# linear = LinearRegression()
+# ridge = Ridge(random_state = 0)
 
-for model in [linear, ridge]:
+# for model in [linear, ridge]:
+#     model.fit(X_train, y_train)
+#     print("{} (train): {:.6f}".format(model.__class__.__name__, model.score(X_train, y_train)))
+#     print("{} (test): {:.6f}".format(model.__class__.__name__, model.score(X_test, y_test)))
+
+# RESULT:
+# LinearRegression: train=0.7029, test=0.7269
+# Ridge:            train=0.7029, test=0.7269
+# Scores are identical — Ridge made no difference here
+# This is because the AQI dataset is clean with low multicollinearity impact
+# In general: Linear tends to score higher on train, Ridge on test (better generalization)
+# Ridge would matter more with noisier data or more features
+
+#-------------------------------------------------
+# LOGISTIC REGRESSION - CLASSIFY AQI AS GOOD/POOR
+df_use['AQI_flg'] = df_use['AQI'].map(lambda x: 1 if x > 100 else 0)
+# creates a binary column, 1 = Poor or worse, 0 = Good/Moderate
+
+# X = df_use[['PM2.5', 'PM10', 'NO2']]
+# y = df_use['AQI_flg']
+
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+
+# # Without standardization: 
+# model = LogisticRegression()
+# model.fit(X_train, y_train)
+
+# print("Before standardization: ")
+# print('Accuracy (train):{:.3f}'.format(model.score(X_train, y_train)))
+# print('Accuracy (test):{:.3f}'.format(model.score(X_test, y_test)))
+
+# # With standardization: 
+# # upto data splitting steps are same
+# sc = StandardScaler()
+# sc.fit(X_train)
+
+# X_train_std = sc.transform(X_train)
+# X_test_std = sc.transform(X_test)
+
+# model = LogisticRegression()
+# model.fit(X_train_std, y_train)
+
+# print("After standardization: ")
+# print('Accuracy (train):{:.3f}'.format(model.score(X_train_std, y_train)))
+# print('Accuracy (test):{:.3f}'.format(model.score(X_test_std, y_test)))
+
+# RESULT:
+# Before standardization: train=0.886, test=0.878
+# After standardization:  train=0.886, test=0.879
+# no overfitting, train n test scores pretty close
+# standardisation helped increase test scores slightly
+# Would prefer to use Logistic regression model over SVM for a Smart City govt. project because they require EXPLAINABILITY - justify decisions to policymakers, not just show accuracy
+# Log. reg. coefficients can be converted to odd ratios and explained in simple language
+# SVM is a black box — high accuracy but you can't explain why it classified something as Poor AQI, which won't be useful in public sector AI
+
+#-------------------------------------------------
+# DECISION TREE - CLASSIFY AQI AS GOOD/POOR
+# Same X and y as previous task
+
+X = df_use[['PM2.5', 'PM10', 'NO2']]
+y = df_use['AQI_flg']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+
+ 
+model = DecisionTreeClassifier( criterion = 'entropy', max_depth = 5, random_state = 0)
+model.fit(X_train, y_train)
+
+print('Accuracy (train):{:.3f}'.format(model.score(X_train, y_train)))
+print('Accuracy (test):{:.3f}'.format(model.score(X_test, y_test)))
+
+# RESULT: 
+# Decision tree: train = 0.892, test = 0.874 (1.8% gap)
+# Log. reg. after standardization:  train=0.886, test=0.879 (0.7 % gap)
+# Decision tree has higher accuracy for training data but slightly lower for test data than logistic regression with standardisation
+# Decision tree train vs. test gap is slightly larger than log. reg. suggesting mild overfitting
+# For Smart city govt. project, will use Log. regression with standardization because it has higher accuracy on test data and is also explainable
+# Although decision tress are great to explain visually  
+
+#-------------------------------------------------
+# K-NN - FIND OPTIMAL K 
+# loop k 1 to 20, same X and y
+
+X = df_use[['PM2.5', 'PM10', 'NO2']]
+y = df_use['AQI_flg']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, stratify = y, random_state=0)
+# test_size controls how much data goes to test (e.g. 0.5 = 50/50)
+# stratify controls how the split happens — it ensures the class ratio in train and test matches the original dataset
+# use both independently - good practice to use both for classification tasks
+
+training_accuracy = []
+test_accuracy = []
+
+for n_neighbours in range(1,21):
+    model = KNeighborsClassifier(n_neighbors = n_neighbours)
     model.fit(X_train, y_train)
-    print("{} (train): {:.6f}".format(model.__class__.__name__, model.score(X_train, y_train)))
-    print("{} (test): {:.6f}".format(model.__class__.__name__, model.score(X_test, y_test)))
+    training_accuracy.append(model.score(X_train, y_train))
+    test_accuracy.append(model.score(X_test, y_test))
 
+plt.plot(range (1,21), training_accuracy, label =  'Training')
+plt.plot( range(1,21), test_accuracy, label = 'Test')
+plt.xlabel('n_neighbors')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
+# RESULT:
+# K = 14 - 20 is optimal, train and test accuracy converge
+# for k = 1 => overfitting because training accuracy = 100% but test accuracy only ~84% => model memorized training data too well so test accuracy drops
+# for k from 1 to 7.5 => overfitting reduces as training accuracy decreases and test increases => model becomes less sensiticve to noise and smoother but train accuracy still a bit unstable and test accuracy still going up
+# for k = 14-20 => best generalisation as gap between train and test accuracy becomes very small and test accuracy stabilises more (~88%) => model is balancing bias and variance well 
+
+#-------------------------------------------------
