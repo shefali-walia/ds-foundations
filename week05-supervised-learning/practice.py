@@ -13,6 +13,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 #-------------------------------------------------
 # LOADING THE CLEANED DATA 
@@ -191,10 +192,98 @@ plt.ylabel('Accuracy')
 plt.legend()
 plt.show()
 
-# RESULT:
-# K = 14 - 20 is optimal, train and test accuracy converge
+# RESULT: 
+# K = 14-20 is optimal, test and train converge
 # for k = 1 => overfitting because training accuracy = 100% but test accuracy only ~84% => model memorized training data too well so test accuracy drops
 # for k from 1 to 7.5 => overfitting reduces as training accuracy decreases and test increases => model becomes less sensiticve to noise and smoother but train accuracy still a bit unstable and test accuracy still going up
 # for k = 14-20 => best generalisation as gap between train and test accuracy becomes very small and test accuracy stabilises more (~88%) => model is balancing bias and variance well 
+# If k chosen by convergence approach (where test and train converge ~14-20), it prioritizes stability, minimizes overfitting risk 
+# Confirmed by GridSearchCV in Task 7 — best k=16 falls in this range
+# Another approach - to see where peak test accuracy is (k=7-8) but prioritises raw performance on unseen data but not stability
 
 #-------------------------------------------------
+# CROSS-VALIDATION: REPLACE HOLDOUT ON DECISION TREE
+
+X = df_use[['PM2.5', 'PM10', 'NO2']]
+y = df_use['AQI_flg']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+
+ 
+tree = DecisionTreeClassifier( criterion = 'entropy', max_depth = 5, random_state = 0)
+scores = cross_val_score(tree, X, y, cv = 5)
+
+print('Cross validation scores: {}'.format(scores))
+print('Cross validation scores: {:.3f}+-{:.3f}'.format(scores.mean(), scores.std()))
+
+# RESULT:
+# Std. = 0.026 => pretty small => stable model across folds
+# 0.873 +- 0.026 means real-world performance likely falls between 0.847 - 0.899
+# Range of scores is around 0.83-0.91 => pretty small range => accurate model
+# mean = 0.873 => slightly less than test accuracy of logistic regression model (0.879) => Logistic Regression remains the better choice for this task
+
+#-------------------------------------------------
+# GRIDSEARCH CV - TUNE k-NN
+X = df_use[['PM2.5', 'PM10', 'NO2']]
+y = df_use['AQI_flg']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, stratify = y, random_state=0)
+
+param_grid = {'n_neighbors': range(1,21)}
+
+gs = GridSearchCV(
+    estimator= KNeighborsClassifier(),
+    param_grid= param_grid,
+    cv = 5
+)
+gs.fit(X_train, y_train)
+
+print('Best CV score: {:.3f}'.format(gs.best_score_))
+print('Best params: {}'.format(gs.best_params_))
+print('Test score: {:.3f}'.format(gs.score(X_test, y_test)))
+
+# RESULT:
+# CV score = 0.880, test score = 0.882 => pretty close, no overfitting
+# best param. = 16 = optimal k according to grid search (coinciding in the 14-20 convergence range)
+# Test score = 0.882 is almost same as that of manual k (~0.881)
+
+#-------------------------------------------------
+# SUMMARY AND FINDINGS
+
+# TASK 1 - MULTIPLE REGRESSION (predict AQI):
+# R² train=0.703, test=0.727 — no overfitting, good generalization
+# NO2 has highest regression coefficient (0.909) — strongest per-unit effect on AQI
+# Multicollinearity between PM2.5 and PM10 (r=0.83) deflates their individual coefficients
+
+# TASK 2 - RIDGE VS LINEAR:
+# Scores identical (0.703/0.727) — Ridge made no difference on this clean dataset
+# Ridge matters more with noisy data or many correlated features
+
+# TASK 3 - LOGISTIC REGRESSION (classify AQI > 100):
+# Before scaling: train=0.886, test=0.878
+# After scaling:  train=0.886, test=0.879 — marginal improvement
+# ~88% accuracy — strong classifier for binary AQI task
+
+# TASK 4 - DECISION TREE:
+# train=0.892, test=0.874 — slightly larger gap than Logistic Reg (mild overfitting)
+# Logistic Regression preferred for Smart City govt projects — explainable + higher test accuracy
+# Decision Trees useful for visual explanation to non-technical stakeholders
+
+# TASK 5 - k-NN:
+# k=1 => overfitting (train=1.0, test=0.84)
+# Optimal k=7-8 (peak test accuracy ~0.881)
+# k=14-20 => stable convergence but no accuracy gain over k=7-8
+
+# TASK 6 - CROSS VALIDATION (Decision Tree, cv=5):
+# mean=0.873, std=0.026 — stable model, small variance across folds
+# Slightly underperforms Logistic Regression (0.879) — LR remains best model
+
+# TASK 7 - GRIDSEARCHCV (k-NN):
+# Best k=16, CV score=0.880, test score=0.882 — no overfitting
+# Grid search confirmed manual observation (k=14-20 stable range)
+# Test score (0.882) matches manual best (~0.881) — consistent result
+
+# MODEL RANKING FOR THIS TASK:
+# 1. Logistic Regression (test=0.879, explainable) — best for deployment
+# 2. k-NN k=16 (test=0.882, slight edge in accuracy)
+# 3. Decision Tree (test=0.874, mild overfitting)
