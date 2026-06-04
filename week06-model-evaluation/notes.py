@@ -153,3 +153,92 @@ f1 = f1_score(y_test, y_pred)
 print(f'Precision:{precision:.3f}')
 print(f'Recall:{recall:.3f}')
 print(f'F1 Score:{f1:.3f}')
+# we get the same results as manual calculations
+# Interpretation:
+# Precision = 0.953 means of all patients model predicted as benign, 95.3% were actually benign, only 4.7% were wrongly called benign
+# Recall = 0.847 means of all patients who were actually benign, the model correctly identified 84.7% of them, It missed 15.3%
+# F1 = 0.897 is the balanced average of both -  89.7% overall - decent but not great for a medical model
+# In this context, Precision matters more than recall because low precision would mean you're sending malignant patients home untreated which is deadly
+# low recall would just mean unnecessary estra tests which is annoying but not dangerous
+# This is the precision-recall tradeoff - can tune the model's threshold to push precision higher, but that will pull recall down - can choose based on what the domain actually needs
+
+#-------------------------------------------------
+# ROC CURVE
+# ROC = RECEIVER OPERATING CHARACTERISTIC = plot of true positive rate (TPR) on vertical axis and false postive rate (FPR) on horizontal axis
+# TPR = recall = sensitivity
+# FPR = proportion of FP = proportion of actual negatives incorrectly predicted as positives 
+# can plot by changing the threshold used to convert predicted probabilities into predicted labels from 0 to 1
+# The closer the curve is to the top-left corner, the better the model’s performance
+# we need predict_proba instead of predict because it's about thresholds
+# ROC curve plots TPR vs FPR at many different thresholds
+# Each threshold gives a different confusion matrix, different TPR and FPR
+# predict_proba gives raw probability so we can try every possible threshold and plot the curve
+# Used Log. reg here instead of SVM because SVM doesn't output probabilities clearly
+
+""" THRESHOLD = the cutoff point where model decides if something is positive or negative 
+model internally thinks in probabilities then needs a rule to convert it to 0 or 1 - that rule is the threshold
+Default = 0.5 => if probability >0.5 then predict positive else predict negative
+But we can change threshold:
+* Lower threshold (ex. 0.3) then model says positive more easily => catches more TP but also more FP => higher recall, lower precision
+* Higher threshold (ex.0.8) then model only says positive when very confident => misses more TP but fewer FP errors => lower recall, higher precision
+So by sliding the threshold from 0 to 1, we get a whole range of TPR/FPR combinations
+The ROC curve plots all of them at once so we can see the full picture of how our model behaves - not just at one arbitrary 0.5 cutoff"""
+
+from sklearn.linear_model import LogisticRegression
+
+model = LogisticRegression(random_state= 0, max_iter = 10000)
+# max_iter = max. no. of steps or iterations the log. reg model is allowed to take before giving up (upper limit, not it actually takes 10000 steps)
+# log. reg. finds its answer through iterative process by adjusting parameters step by step until it converges i.e. stops improving
+# default max_iter = 100, which is often not enough - so model will throw "ConvergenceWarning" meaning it ran out of steps before finding best answer
+model.fit(X_train, y_train)
+
+results = pd.DataFrame(model.predict_proba(X_test), columns = cancer.target_names)
+print(results.head())
+
+# considering thresholds from 0.01 to 0.99 in 50 increments
+rates = {}
+for threshold in np.linspace(0.01, 0.99, num = 50):
+    labels = results['benign'].map(lambda x: 1 if x > threshold else 0)
+    m = confusion_matrix(y_test, labels)
+    rates[threshold] = {'false positive rate': m[0,1]/ m[0,:].sum(),
+                        'true positive rate': m[1,1]/ m[1,:].sum()}
+    
+pd.DataFrame(rates).T.plot.scatter('false positive rate', 'true positive rate')
+plt.show()
+# result: as FPR increases, TPR also increases - that's the tradeoff - catch more TP but also more FP
+# we get the scatter plot manually - smooth line curve will come from using roc_curve
+
+from sklearn import svm
+from sklearn.metrics import roc_curve, auc
+
+model = svm.SVC(kernel = 'linear', probability = True, random_state = 0) 
+model.fit(X_train, y_train)
+# we sent probability = true  during SVC initialisation calculate probabilities from the SVM output to use predict_proba later
+# kernel = linear for simpler kernel, less likely to overfit
+y_pred = model.predict_proba(X_test)[:,1]
+
+# ROC-AUC (Area under Curve)
+# ROC-AUC value can be obtained by passing FPR and TPR (in this order) to the auc function
+fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+auc_value = auc(fpr, tpr)
+
+plt.plot(fpr, tpr, color = 'red', label = 'ROC curve (area = %.3f)' % auc_value)
+plt.plot([0,1], [0,1], color = 'black', linestyle = '--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False positive rate')
+plt.ylabel('True positive rate')
+plt.title('Receiver operating characteristic')
+plt.legend(loc="best")
+plt.show()
+
+# higher auc (closer to 1)= better 
+# Why ROC-AUC over accuracy? because AUC measures performance across all threshols and works well even on imbalanced data unlike accuracy
+
+from sklearn.metrics import roc_auc_score
+print(roc_auc_score(y_test, y_pred))
+
+# Ideal ROC curve = right angle on top left corner => AUC = 1
+# Guess ROC curve = random  = straight diagonal line from origin with slope 1 => AUC = 0.5
+# AUC is very good metric for evaluating models under imbalanced data conditions
+
