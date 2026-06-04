@@ -346,3 +346,43 @@ plt.show()
 # Linear Regression on the left has a tighter, more consistent spread along the diagonal
 # Decision Tree on the right looks more scattered and blocky = overfitting
 # So Linear Regression is actually the better model here despite looking "messier" at first glance
+
+#-------------------------------------------------
+# SUMMARY
+# WHY EVALUATION METRICS MATTER
+# accuracy alone is not enough - it hides the shape of your mistakes
+# different errors have different consequences depending on the domain
+# model evaluation = understanding not just HOW MANY errors, but WHAT KIND
+
+# CONFUSION MATRIX
+# 2x2 grid showing predicted vs actual values
+# TP - predicted positive, actually positive (correct)
+# TN - predicted negative, actually negative (correct)
+# FP - predicted positive, actually negative (wrong - model was too confident)
+# FN - predicted negative, actually positive (wrong - model missed it)
+# which error is "worse" depends entirely on the domain
+
+# CLASSIFICATION METRICS
+# Accuracy = (TP+TN) / total — misleading on imbalanced data
+# Precision = TP / (TP+FP) — of all predicted positives, how many were right
+# Recall = TP / (TP+FN) — of all actual positives, how many did we catch
+# F1 = harmonic mean of precision and recall — use when no clear priority between the two
+# Precision-Recall Tradeoff — lowering threshold increases recall but decreases precision
+
+# ROC CURVE + AUC
+# plots TPR vs FPR across all possible thresholds
+# AUC = area under the curve, closer to 1 = better
+# AUC = 0.5 = random guessing (diagonal line)
+# AUC = 1.0 = perfect model (right angle top left)
+# better than accuracy for imbalanced data
+
+# REGRESSION METRICS
+# MSE - penalizes large errors heavily (squares them)
+# RMSE - same as MSE but interpretable in original data units
+# MAE - treats all errors equally, not affected by direction
+# MedAE - uses median, completely ignores outliers
+# R^2 - % of variance in actual values explained by the model (1 = perfect, 0 = no better than mean)
+
+# KEY INSIGHT
+# no single metric tells the whole story
+# always choose metrics based on what your domain actually needs
