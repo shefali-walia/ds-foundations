@@ -69,3 +69,43 @@ print("Test Accuracy: {:.3f}".format(model.score(X_test_std, y_test)))
 # test slightly greater than train (1.1%) => can be random variation in data, test may be easier set
 
 #-------------------------------------------------
+# CONFUSION MATRIX
+# Using the log. reg. model made above
+y_pred = model.predict(X_test_std)
+m = confusion_matrix(y_test, y_pred)
+print(f'Confusion matrix: \n{m}')
+# here 1(positive) means poor and 0(negative) means good/moderate AQI
+# Result:
+# TP = 1752, FN = 201, FP = 177, TN = 1372
+# here FN i.e. wrongly predicted as good/moderate AQI is more dangerous error because it might affect people with respiratory diseases and also prevents actions by govt. and industries to manage the AQI levels
+# Smart city context - Govt. can predict AQI levels and categorize them by area to take preventive measures, ban harmful effluents etc. timely before situation gets worse
+
+#-------------------------------------------------
+# CALCULATING METRICS MANUALLY
+
+# accuracy = (TP+TN) / (TP+TN+FP+FN)
+accuracy = (m[0,0] + m[1,1])/ m.sum()
+print(f'Accuracy: {accuracy:.3f}')
+
+# precision = TP / (TP+FP)
+precision = m[1,1] / m[:,1].sum()
+print(f'Precision: {precision:.3f}')
+
+# recall = TP/ (TP+FN)
+recall = m[1,1] / m[1,:].sum()
+print(f'Recall: {recall:.3f}')
+
+# F1 score = 2/((1/recall) + (1/precision))
+f1 = 2 * (precision*recall)/(precision+recall)
+print(f'F1 score: {f1:.3f}')
+
+#-------------------------------------------------
+# VERIFYING METRICS WITH SKLEARN
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+
+print("Verification using sklearn: ")
+print(f'Precision: {precision:.3f}')
+print(f'Recall: {recall:.3f}')
+print(f'F1 score: {f1:.3f}')
