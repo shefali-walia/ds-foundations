@@ -42,23 +42,23 @@ print(df_use.corr())  # Correlation check
 # can lead to multi-collinearity but here we're using for practice
 
 # BUILDING MODEL:
-# X = df_use.drop('AQI', axis = 1)
-# y = df_use['AQI']
+X = df_use.drop('AQI', axis = 1)
+y = df_use['AQI']
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
 
-# model = LinearRegression()
-# model.fit(X_train, y_train)
+model = LinearRegression()
+model.fit(X_train, y_train)
 
-# # Coefficient of determination (R^2)
-# print(f"Coefficient of Determination (train) = {model.score(X_train, y_train):.3f}")
-# print(f"Coefficient of Determination (test) = {model.score(X_test, y_test):.3f}")
+# Coefficient of determination (R^2)
+print(f"Coefficient of Determination (train) = {model.score(X_train, y_train):.3f}")
+print(f"Coefficient of Determination (test) = {model.score(X_test, y_test):.3f}")
 
-# # Regression coefficents
-# print(f"Regression Coefficients: \n {pd.Series(model.coef_, index = X.columns)}")
+# Regression coefficents
+print(f"Regression Coefficients: \n {pd.Series(model.coef_, index = X.columns)}")
 
-# # Intercept
-# print(f"Intercept: {model.intercept_ :.3f}")
+# Intercept
+print(f"Intercept: {model.intercept_ :.3f}")
 
 # RESULT:
 # train = 0.703, test = 0.727 => close enough => no overfitting
@@ -77,18 +77,18 @@ print(df_use.corr())  # Correlation check
 # RIDGE VS. LINEAR - DOES REGULARISATION HELP?
 
 # X, y same as before - only looping through both models here
-# X = df_use.drop('AQI', axis = 1)
-# y = df_use['AQI']
+X = df_use.drop('AQI', axis = 1)
+y = df_use['AQI']
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 0)
 
-# linear = LinearRegression()
-# ridge = Ridge(random_state = 0)
+linear = LinearRegression()
+ridge = Ridge(random_state = 0)
 
-# for model in [linear, ridge]:
-#     model.fit(X_train, y_train)
-#     print("{} (train): {:.6f}".format(model.__class__.__name__, model.score(X_train, y_train)))
-#     print("{} (test): {:.6f}".format(model.__class__.__name__, model.score(X_test, y_test)))
+for model in [linear, ridge]:
+    model.fit(X_train, y_train)
+    print("{} (train): {:.6f}".format(model.__class__.__name__, model.score(X_train, y_train)))
+    print("{} (test): {:.6f}".format(model.__class__.__name__, model.score(X_test, y_test)))
 
 # RESULT:
 # LinearRegression: train=0.7029, test=0.7269
@@ -103,33 +103,33 @@ print(df_use.corr())  # Correlation check
 df_use['AQI_flg'] = df_use['AQI'].map(lambda x: 1 if x > 100 else 0)
 # creates a binary column, 1 = Poor or worse, 0 = Good/Moderate
 
-# X = df_use[['PM2.5', 'PM10', 'NO2']]
-# y = df_use['AQI_flg']
+X = df_use[['PM2.5', 'PM10', 'NO2']]
+y = df_use['AQI_flg']
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
-# # Without standardization: 
-# model = LogisticRegression()
-# model.fit(X_train, y_train)
+# Without standardization: 
+model = LogisticRegression()
+model.fit(X_train, y_train)
 
-# print("Before standardization: ")
-# print('Accuracy (train):{:.3f}'.format(model.score(X_train, y_train)))
-# print('Accuracy (test):{:.3f}'.format(model.score(X_test, y_test)))
+print("Before standardization: ")
+print('Accuracy (train):{:.3f}'.format(model.score(X_train, y_train)))
+print('Accuracy (test):{:.3f}'.format(model.score(X_test, y_test)))
 
-# # With standardization: 
-# # upto data splitting steps are same
-# sc = StandardScaler()
-# sc.fit(X_train)
+# With standardization: 
+# upto data splitting steps are same
+sc = StandardScaler()
+sc.fit(X_train)
 
-# X_train_std = sc.transform(X_train)
-# X_test_std = sc.transform(X_test)
+X_train_std = sc.transform(X_train)
+X_test_std = sc.transform(X_test)
 
-# model = LogisticRegression()
-# model.fit(X_train_std, y_train)
+model = LogisticRegression()
+model.fit(X_train_std, y_train)
 
-# print("After standardization: ")
-# print('Accuracy (train):{:.3f}'.format(model.score(X_train_std, y_train)))
-# print('Accuracy (test):{:.3f}'.format(model.score(X_test_std, y_test)))
+print("After standardization: ")
+print('Accuracy (train):{:.3f}'.format(model.score(X_train_std, y_train)))
+print('Accuracy (test):{:.3f}'.format(model.score(X_test_std, y_test)))
 
 # RESULT:
 # Before standardization: train=0.886, test=0.878
