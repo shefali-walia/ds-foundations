@@ -264,6 +264,12 @@ print(df_results.to_string(index=False))
 # occasional large errors pull average up
 # Linear Regression outperforms Decision Tree — smooth scatter vs blocky overfitting pattern
 
+# BASELINE CHECK: 
+# class distribution — what % is Poor (AQI>100)?
+# print(df_use['AQI_flg'].value_counts(normalize=True))
+# if 80% of data is Poor, a model that always predicts Poor gets 80% accuracy for free
+# our model at 89% only meaningful if it clears this bar significantly
+
 # KEY LESSONS:
 # 1. Accuracy alone is misleading — always check precision, recall, F1 together
 # 2. Which error is "worse" (FP vs FN) depends entirely on domain consequences
