@@ -188,3 +188,21 @@ print(pd.Series(scores).unstack())
 # For Smart City deployment: Logistic Regression preferred — explainable + no overfitting risk
 
 #-------------------------------------------------
+# FEATURE IMPORTANCE FOR RANDOM FOREST
+# for index you can use only those columns which the model was trained on (X)
+s = pd.Series(models['RandomForest'].feature_importances_, index = ['PM2.5', 'PM10', 'NO2'])
+
+plt.figure(figsize = (8,6))
+s.sort_values(ascending = False).plot.bar()
+plt.grid(True)
+plt.show()
+
+# Feature importance: PM10 (0.46) > PM2.5 (0.37) > NO2 (0.17)
+# PM10 ranking highest is interesting - in Week 4 heatmap, PM2.5 had a stronger correlation with AQI
+# The difference:
+# Correlation measures linear relationship with AQI (PM2.5 wins there)
+# Random Forest importance measures how much a feature reduces impurity across all splits - PM10's wider range may create more useful split points
+# NO2 being lowest makes sense as it's a secondary pollutant, more a consequence of traffic/industry than a direct AQI driver
+# For Smart City policy: PM10 is actionable (construction dust, road dust), a model flagging PM10 spikes gives authorities something to act on
+
+#-------------------------------------------------
