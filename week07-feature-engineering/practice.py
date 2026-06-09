@@ -34,7 +34,6 @@ print("Data types: \n",df_use.dtypes)
 #-------------------------------------------------
 # LOG TRANSFORMATION ON PM2.5
 # From Week4 histogram - PM2.5 is right-skewed (long tail towards right)
-# Plot before and after histograms side by side and train log. reg. on both and compare F1 score
 
 plt.figure(figsize = (8,6))
 # Before chart
@@ -84,5 +83,22 @@ print(f"F1 score for log: {f1_log:.3f}")
 # This is expected, Logistic Regression with a single feature on a large dataset already separates classes reasonably well
 # Log transform helps more when extreme outliers are distorting a linear decision boundary across multiple features
 # In a Smart City deployment, log-transforming PM2.5 still makes sense for model stability and interpretability, even if F1 gain is minimal here
+
+#-------------------------------------------------
+# ONE-HOT ENCODING ON SEASON
+# One-hot encoding on Season column (Winter/Summer/Monsoon/Post-Monsoon)
+
+season_dummies = pd.get_dummies(df['Season']).astype(int)   #get_dummies returns a new dataframe so join it back to original df
+df = pd.concat([df, season_dummies], axis=1)
+print(df.head())
+# took df here because df_use doesn't have season column
+
+# Why not label encoding for Season?
+# Label encoding assigns integers (e.g. Winter=0, Summer=1, Monsoon=2, Post-Monsoon=3)
+# which implies an ordering - as if Winter < Summer < Monsoon mathematically.
+# Seasons have no such ranking, the model would learn a false relationship
+# One-hot encoding creates separate binary columns so each season is treated as independent - no ordering, no false magnitude differences
+# Season is nominal (categories with no order). Label encoding is for ordinal data only
+# Label encoding implies ordinal relationship where none exists
 
 #-------------------------------------------------
