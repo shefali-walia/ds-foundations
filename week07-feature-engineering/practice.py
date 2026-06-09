@@ -35,48 +35,48 @@ print("Data types: \n",df_use.dtypes)
 # LOG TRANSFORMATION ON PM2.5
 # From Week4 histogram - PM2.5 is right-skewed (long tail towards right)
 
-# plt.figure(figsize = (8,6))
-# # Before chart
-# plt.subplot(1,2,1)
-# plt.hist(df_use['PM2.5'], bins = 30, edgecolor = 'black', range = (0,800))
-# plt.title("Without Log Transformation", fontsize = 10)
-# plt.xlabel("PM2.5")
-# plt.ylabel("Frequency")
-# plt.grid(True, linestyle = '--', alpha = 0.5)
+plt.figure(figsize = (8,6))
+# Before chart
+plt.subplot(1,2,1)
+plt.hist(df_use['PM2.5'], bins = 30, edgecolor = 'black', range = (0,800))
+plt.title("Without Log Transformation", fontsize = 10)
+plt.xlabel("PM2.5")
+plt.ylabel("Frequency")
+plt.grid(True, linestyle = '--', alpha = 0.5)
 
-# df_use['PM2.5_log'] = np.log1p(df_use['PM2.5'])
+df_use['PM2.5_log'] = np.log1p(df_use['PM2.5'])
 
-# # After chart
-# plt.subplot(1,2,2)
-# plt.hist(df_use['PM2.5_log'], bins = 30, edgecolor = 'black') 
-# plt.title("With Log Transformation", fontsize = 10)
-# plt.xlabel("log(1 + PM2.5)")
-# plt.grid(True, linestyle = '--', alpha = 0.5)
+# After chart
+plt.subplot(1,2,2)
+plt.hist(df_use['PM2.5_log'], bins = 30, edgecolor = 'black') 
+plt.title("With Log Transformation", fontsize = 10)
+plt.xlabel("log(1 + PM2.5)")
+plt.grid(True, linestyle = '--', alpha = 0.5)
 
-# plt.show()
+plt.show()
 # Interpretation: skewness reduces, much more symmetric distribution after log transformation, compressed between range 2-6
 
 # Training log. reg. models on both raw data and transformed data and comparing f1 scores
 
 df_use['AQI_flg'] = df_use['AQI'].map(lambda x: 1 if x > 100 else 0)  # Binary target 
 
-# X_raw = df_use[['PM2.5']]
-# X_log = df_use[['PM2.5_log']]    # double brackets to pass X as Dataframe instead of series
-# y = df_use['AQI_flg']
+X_raw = df_use[['PM2.5']]
+X_log = df_use[['PM2.5_log']]    # double brackets to pass X as Dataframe instead of series
+y = df_use['AQI_flg']
 
-# X_raw_train, X_raw_test, y_train, y_test = train_test_split(X_raw, y, test_size=0.2, random_state=42)
-# X_log_train, X_log_test, _, _ = train_test_split(X_log, y, test_size=0.2, random_state=42)  # y is already split, dont need now, so discard those values by using _,_
+X_raw_train, X_raw_test, y_train, y_test = train_test_split(X_raw, y, test_size=0.2, random_state=42)
+X_log_train, X_log_test, _, _ = train_test_split(X_log, y, test_size=0.2, random_state=42)  # y is already split, dont need now, so discard those values by using _,_
 
-# model = LogisticRegression()
-# model.fit(X_raw_train, y_train)
-# y_pred = model.predict(X_raw_test)
-# f1_raw = f1_score(y_test, y_pred)
-# print(f"F1 score for raw: {f1_raw:.3f}")
+model = LogisticRegression()
+model.fit(X_raw_train, y_train)
+y_pred = model.predict(X_raw_test)
+f1_raw = f1_score(y_test, y_pred)
+print(f"F1 score for raw: {f1_raw:.3f}")
 
-# model.fit(X_log_train, y_train)
-# y_pred = model.predict(X_log_test)
-# f1_log = f1_score(y_test, y_pred)
-# print(f"F1 score for log: {f1_log:.3f}")
+model.fit(X_log_train, y_train)
+y_pred = model.predict(X_log_test)
+f1_log = f1_score(y_test, y_pred)
+print(f"F1 score for log: {f1_log:.3f}")
 
 # Result: 
 # F1 score for raw = 0.862, for log = 0.857 = lower
@@ -88,9 +88,9 @@ df_use['AQI_flg'] = df_use['AQI'].map(lambda x: 1 if x > 100 else 0)  # Binary t
 # ONE-HOT ENCODING ON SEASON
 # One-hot encoding on Season column (Winter/Summer/Monsoon/Post-Monsoon)
 
-# season_dummies = pd.get_dummies(df['Season']).astype(int)   #get_dummies returns a new dataframe so join it back to original df
-# df = pd.concat([df, season_dummies], axis=1)
-# print(df.head())
+season_dummies = pd.get_dummies(df['Season']).astype(int)   #get_dummies returns a new dataframe so join it back to original df
+df = pd.concat([df, season_dummies], axis=1)
+print(df.head())
 # took df here because df_use doesn't have season column
 
 # Why not label encoding for Season?
@@ -106,24 +106,24 @@ df_use['AQI_flg'] = df_use['AQI'].map(lambda x: 1 if x > 100 else 0)  # Binary t
 # Use polynomialfeatures when you have 5+ columns - that is the automated version and you want every possible pair
 # But when you know exactly which interaction you want, you just multiply the two columns directly
 
-# df_use['PM_interaction'] = df_use['PM2.5'] * df_use['PM10']
-# print(df_use.head())
+df_use['PM_interaction'] = df_use['PM2.5'] * df_use['PM10']
+print(df_use.head())
 
-# # Training Linear reg. model with and without PM_interaction
+# Training Linear reg. model with and without PM_interaction
 
-# X_without = df_use[['PM2.5', 'PM10', 'NO2']]
-# X_with = df_use[['PM2.5', 'PM10', 'NO2', 'PM_interaction']]
-# y = df_use['AQI']  #Linear reg. predicts continuous values so y should be actual AQI no., not AQI_flg binary column
+X_without = df_use[['PM2.5', 'PM10', 'NO2']]
+X_with = df_use[['PM2.5', 'PM10', 'NO2', 'PM_interaction']]
+y = df_use['AQI']  #Linear reg. predicts continuous values so y should be actual AQI no., not AQI_flg binary column
 
-# X_without_train, X_without_test, y_train, y_test = train_test_split(X_without, y, test_size= 0.2, random_state= 42)
-# X_with_train, X_with_test, _,_ = train_test_split(X_with, y, test_size= 0.2, random_state= 42)  # don't use stratify for regression (it works only for classification)
+X_without_train, X_without_test, y_train, y_test = train_test_split(X_without, y, test_size= 0.2, random_state= 42)
+X_with_train, X_with_test, _,_ = train_test_split(X_with, y, test_size= 0.2, random_state= 42)  # don't use stratify for regression (it works only for classification)
 
-# model = LinearRegression()
+model = LinearRegression()
 
-# model.fit(X_without_train, y_train)
-# print('R^2 score without PM_interaction: {:.3f}'.format(model.score(X_without_test, y_test))) 
-# model.fit(X_with_train, y_train)
-# print('R^2 score with PM_interaction: {:.3f}'.format(model.score(X_with_test, y_test)))
+model.fit(X_without_train, y_train)
+print('R^2 score without PM_interaction: {:.3f}'.format(model.score(X_without_test, y_test))) 
+model.fit(X_with_train, y_train)
+print('R^2 score with PM_interaction: {:.3f}'.format(model.score(X_with_test, y_test)))
 
 # R^2 improved marginally from 0.733 to 0.734 with PM_interaction
 # The small gain makes sense — PM2.5 and PM10 are already highly correlated, so their product doesn't add much new information the model didn't already have
@@ -239,3 +239,34 @@ print(pd.Series(scores).unstack())
 # XGBoost with early stopping in Task 8 will test if we can push past 0.892
 
 #-------------------------------------------------
+# XGBOOST WITH EARLY STOPPING
+
+X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=1/8, random_state=42)
+
+model = XGBClassifier(
+    n_estimators = 500, 
+    early_stopping_rounds = 10, 
+    eval_metric = 'logloss', 
+    random_state = 42,
+    verbose = 0
+    )
+model.fit(X_train, y_train, eval_set = [(X_val, y_val)], verbose = 0)
+print(f"XGBoost test accuracy: {model.score(X_test, y_test):.4f}")
+print(f"XGBoost best round: {model.best_iteration}")
+print(f"GradientBoosting test accuracy: 0.8921")  # from Task 7
+
+# XGBoost stopped at round 21 out of 500 — meaning after round 21, logloss on the validation set didn't improve for 10 consecutive rounds
+# The model found its optimum very early, suggesting the dataset isn't complex enough to need 500 trees
+# Final comparison:
+# GradientBoosting: 0.8921
+# XGBoost:          0.8829
+# RandomForest:     0.8898
+# LogisticRegression: 0.8915
+
+# XGBoost underperformed here — likely because early stopping at round 21 was too aggressive with default hyperparameters
+# Optuna tuning (learning_rate, max_depth, subsample) would likely push XGBoost past GradientBoosting — it's the same algorithm but with more regularisation levers available
+# For now, GradientBoosting generalises best on this dataset.
+
+#-------------------------------------------------
+
