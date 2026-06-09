@@ -102,3 +102,34 @@ print(df.head())
 # Label encoding implies ordinal relationship where none exists
 
 #-------------------------------------------------
+# CROSS FEATURE - PM2.5 * PM10
+# Use polynomialfeatures when you have 5+ columns - that is the automated version and you want every possible pair
+# But when you know exactly which interaction you want, you just multiply the two columns directly
+
+df_use['PM_interaction'] = df_use['PM2.5'] * df_use['PM10']
+print(df_use.head())
+
+# Training Linear reg. model with and without PM_interaction
+
+X_without = df_use[['PM2.5', 'PM10', 'NO2']]
+X_with = df_use[['PM2.5', 'PM10', 'NO2', 'PM_interaction']]
+y = df_use['AQI']  #Linear reg. predicts continuous values so y should be actual AQI no., not AQI_flg binary column
+
+X_without_train, X_without_test, y_train, y_test = train_test_split(X_without, y, test_size= 0.2, random_state= 42)
+X_with_train, X_with_test, _,_ = train_test_split(X_with, y, test_size= 0.2, random_state= 42)  # don't use stratify for regression (it works only for classification)
+
+model = LinearRegression()
+
+model.fit(X_without_train, y_train)
+print('R^2 score without PM_interaction: {:.3f}'.format(model.score(X_without_test, y_test))) 
+model.fit(X_with_train, y_train)
+print('R^2 score with PM_interaction: {:.3f}'.format(model.score(X_with_test, y_test)))
+
+# R^2 improved marginally from 0.733 to 0.734 with PM_interaction
+# The small gain makes sense — PM2.5 and PM10 are already highly correlated, so their product doesn't add much new information the model didn't already have
+# However, the interaction term can still be meaningful in a Smart City context:
+# days where BOTH PM2.5 and PM10 are simultaneously high represent compound pollution events (e.g. dust storms + vehicle emissions) that are more dangerous than either pollutant alone
+# A small R² gain doesn't mean the feature is useless - it means linear models can't fully capture that non-linear relationship
+# Tree-based models may extract more value from this feature
+
+#-------------------------------------------------
