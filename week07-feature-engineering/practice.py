@@ -269,4 +269,32 @@ print(f"GradientBoosting test accuracy: 0.8921")  # from Task 7
 # For now, GradientBoosting generalises best on this dataset.
 
 #-------------------------------------------------
+# SUMMARY
 
+# LOG TRANSFORM on PM2.5 did not improve F1 much (0.862 to 0.857) in isolation but it makes the distribution more normal which helps in multi-feature models
+# Always worth doing on skewed pollution data
+
+# ONE-HOT ENCODING season into 4 binary columns because label encoding would imply a fake ordering between seasons which does not exist - seasons are nominal
+
+# PM_interaction barely improved R2 (0.733 to 0.734) - linear models cannot really use interaction terms well, tree models will extract more from this
+
+# is_winter and high_particulate did not change accuracy at all (stayed 0.891)
+# logistic regression already figures out these thresholds from raw values but these features are still useful for explainability in policy reports
+
+# RANDOMFOREST overfits heavily - train 0.999, test 0.890 - big gap
+# logistic regression generalises cleanly with almost no gap
+# more complexity did not buy anything here
+
+# FEATURE IMPORTANCE from random forest: PM10 > PM2.5 > NO2
+# interesting because in week 4 heatmap PM2.5 had stronger correlation
+# correlation measures linear relationship, importance measures split utility
+
+# GRADIENT BOOSTING generalised best - train 0.890, test 0.892, near zero gap
+# sequential tree building acts like built-in regularisation unlike random forest
+
+# XGBoost stopped at round 21 out of 500 with test accuracy 0.8829
+# early stopping with default params was too aggressive
+# gradient boosting still won here - xgboost needs hyperparameter tuning to shine
+
+# MAIN TAKEAWAY - feature engineering rarely gives dramatic jumps on clean data
+# the real value is stability, interpretability, and setting up tree models properly
