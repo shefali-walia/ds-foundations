@@ -206,3 +206,36 @@ plt.show()
 # For Smart City policy: PM10 is actionable (construction dust, road dust), a model flagging PM10 spikes gives authorities something to act on
 
 #-------------------------------------------------
+# GRADIENT BOOSTING VS RANDOMFOREST VS LOGISTIC REGRESSION
+
+X = df_use[['PM2.5', 'PM10', 'NO2']]
+y = df_use['AQI_flg']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.2, stratify = y, random_state= 42)
+models = {
+    'GradientBoosting' : GradientBoostingClassifier(random_state=42),
+    'RandomForest' : RandomForestClassifier(random_state= 42),
+    'LogisticRegression' : LogisticRegression(random_state=42)
+}
+scores = {}
+for model_name, model in models.items():
+    model.fit(X_train, y_train)
+    scores[(model_name, 'train_score')] = model.score(X_train, y_train)
+    scores[(model_name, 'test_score')] = model.score(X_test, y_test)
+
+print(pd.Series(scores).unstack())
+
+# Generalisation ranking: GradientBoosting > LogisticRegression > RandomForest
+# GradientBoosting: train (0.890) ≈ test (0.892) — near zero gap, best generalisation
+# LogisticRegression: train (0.880) ≈ test (0.891) — also tight, slightly lower ceiling
+# RandomForest: train (0.999) vs test (0.890) — massive gap, clear overfitting
+
+# Why GradientBoosting generalises better than RandomForest:
+# Random Forest builds trees independently and fully (deep trees = memorisation)
+# Gradient Boosting builds trees sequentially, each correcting the previous one's errors in small steps — the gradual correction acts as built-in regularisation
+
+# All three test scores are within 0.003 of each other (0.889-0.892)
+# so the dataset itself may be the ceiling here, not the model
+# XGBoost with early stopping in Task 8 will test if we can push past 0.892
+
+#-------------------------------------------------
