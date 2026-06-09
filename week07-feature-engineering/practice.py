@@ -129,7 +129,7 @@ df_use['AQI_flg'] = df_use['AQI'].map(lambda x: 1 if x > 100 else 0)  # Binary t
 # The small gain makes sense — PM2.5 and PM10 are already highly correlated, so their product doesn't add much new information the model didn't already have
 # However, the interaction term can still be meaningful in a Smart City context:
 # days where BOTH PM2.5 and PM10 are simultaneously high represent compound pollution events (e.g. dust storms + vehicle emissions) that are more dangerous than either pollutant alone
-# A small R² gain doesn't mean the feature is useless - it means linear models can't fully capture that non-linear relationship
+# A small R^2 gain doesn't mean the feature is useless - it means linear models can't fully capture that non-linear relationship
 # Tree-based models may extract more value from this feature
 
 #-------------------------------------------------
@@ -157,5 +157,34 @@ print('Accuracy with new features: {:.3f}'.format(model.score(X_new_test, y_test
 # the threshold logic (PM2.5 > 100, PM10 > 150) is something the model learns on its own from continuous values
 # Domain features tend to help more with tree-based models where explicit thresholds create cleaner split points
 # In a real Smart City pipeline, is_winter still has value for interpretability — a policy report saying "winter increases bad air probability" is more actionable than a model coefficient
+
+#-------------------------------------------------
+# RANDOM FOREST VS. LOGISTIC REGRESSION
+# AQI binary classification task (AQI >100 = 'Poor')
+
+X = df_use[['PM2.5', 'PM10', 'NO2']]
+y = df_use['AQI_flg']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.2, stratify = y, random_state= 42)
+# if no test size is mentioned, default =0.25 i.e. 25% test is used
+
+models = {
+    'RandomForest' : RandomForestClassifier(random_state= 42),
+    'LogisticRegression' : LogisticRegression(random_state=42)
+}
+scores = {}
+for model_name, model in models.items():
+    model.fit(X_train, y_train)
+    scores[(model_name, 'train_score')] = model.score(X_train, y_train)
+    scores[(model_name, 'test_score')] = model.score(X_test, y_test)
+
+print(pd.Series(scores).unstack())
+
+# Result: RandomForest is overfitting - train = 0.99, test = 0.88
+# Logistic regression train(0.88) ~ test (0.89) => generalises well, no overfitting
+# Test scores almost identical (0.891 vs 0.890) — Random Forest's complexity bought nothing
+# This is a classic case where a simpler model wins on this dataset
+# Random Forest would need tuning (max_depth, min_samples_leaf) to reduce overfitting
+# For Smart City deployment: Logistic Regression preferred — explainable + no overfitting risk
 
 #-------------------------------------------------
