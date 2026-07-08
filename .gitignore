@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
+*.zip
 
 # Datasets:
 MyAnimeList-Database-master/
@@ -9,3 +10,4 @@ bike_sharing_dataset/
 aqi_cleaned.csv
 **/*cleaned*.csv
 *.csv
+bank+marketing/
