@@ -19,6 +19,7 @@ import requests, zipfile
 import io, os
 import warnings
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 #-------------------------------------------------
 # CLUSTERING AND K-MEANS METHOD
@@ -59,79 +60,143 @@ X, _ = make_blobs(random_state= 10)
 # automatically shows legend
 
 #-------------------------------------------------
-# CLUSTERING FINANCIAL MARKETING DATA
-url = "http://archive.ics.uci.edu/static/public/222/bank+marketing.zip"
-r = requests.get(url, stream = True)
-base = os.path.dirname(os.path.abspath(__file__))
+# # CLUSTERING FINANCIAL MARKETING DATA
+# url = "http://archive.ics.uci.edu/static/public/222/bank+marketing.zip"
+# r = requests.get(url, stream = True)
+# base = os.path.dirname(os.path.abspath(__file__))
 
-z = zipfile.ZipFile(io.BytesIO(r.content))
-z.extractall(os.path.join(base, "bank+marketing"))
+# z = zipfile.ZipFile(io.BytesIO(r.content))
+# z.extractall(os.path.join(base, "bank+marketing"))
 
-nested_zip_path = os.path.join(base, "bank+marketing", "bank.zip")
-with zipfile.ZipFile(nested_zip_path) as z2:
-    z2.extractall(os.path.join(base, "bank+marketing", "bank"))
+# nested_zip_path = os.path.join(base, "bank+marketing", "bank.zip")
+# with zipfile.ZipFile(nested_zip_path) as z2:
+#     z2.extractall(os.path.join(base, "bank+marketing", "bank"))
 
-bank = pd.read_csv(os.path.join(base, 'bank+marketing','bank', 'bank-full.csv'), sep=';')
-print(bank.head())
-print("Dataset shape: ", bank.shape)  #(45211, 17)
-print('Number of missing values: {}'.format(bank.isnull().sum().sum()))  # 0 missing values 
+# bank = pd.read_csv(os.path.join(base, 'bank+marketing','bank', 'bank-full.csv'), sep=';')
+# print(bank.head())
+# print("Dataset shape: ", bank.shape)  #(45211, 17)
+# print('Number of missing values: {}'.format(bank.isnull().sum().sum()))  # 0 missing values 
 
-bank_sub = bank[['age','balance','campaign','previous']]
-sc = StandardScaler()
-sc.fit(bank_sub)
-bank_sub_std = sc.transform(bank_sub)
+# bank_sub = bank[['age','balance','campaign','previous']]
+# sc = StandardScaler()
+# sc.fit(bank_sub)
+# bank_sub_std = sc.transform(bank_sub)
 
-bank_sub.info()
+# bank_sub.info()
 
-kmeans = KMeans(init = 'random', n_clusters=6, random_state=0)
-kmeans.fit(bank_sub_std)
+# kmeans = KMeans(init = 'random', n_clusters=6, random_state=0)
+# kmeans.fit(bank_sub_std)
 
-labels = pd.Series(kmeans.labels_, name='cluster_number')
-print(labels.value_counts(sort=False))
+# labels = pd.Series(kmeans.labels_, name='cluster_number')
+# print(labels.value_counts(sort=False))
 
-# ax = labels.value_counts(sort=False).plot(kind='bar')
-# ax.set_xlabel('cluster number')
-# ax.set_ylabel('count')
+# # ax = labels.value_counts(sort=False).plot(kind='bar')
+# # ax.set_xlabel('cluster number')
+# # ax.set_ylabel('count')
+# # plt.show()
+
+# # ELBOW METHOD 
+# # determine the appropriate number of clusters
+# # by analyzing how the sum of distances between the cluster centroids and the data points within each cluster change accordingly with the number of clusters
+# # As no. of clusters increase from 1, this sum is expected to decrease (since each point will be assigned to a closer centroid)
+# # It will reach an appropriate no. at some time 
+# # after which rate of decrease in this sum is expected to slow down
+# # this method looks at this CHANGE IN RATE OF DECREASE to determine appropriate no. of clusters
+# # elbow name because of shape of graph
+
+# dist_list = []
+# for i in range(1,10):
+#     kmeans = KMeans(n_clusters=i, init='random', random_state=0)
+#     kmeans.fit(X)
+#     dist_list.append(kmeans.inertia_)
+
+# plt.plot(range(1,10), dist_list, marker='+')
+# plt.xlabel('Number of clusters')
+# plt.ylabel('Distortion')
 # plt.show()
 
-# ELBOW METHOD 
-# determine the appropriate number of clusters
-# by analyzing how the sum of distances between the cluster centroids and the data points within each cluster change accordingly with the number of clusters
-# As no. of clusters increase from 1, this sum is expected to decrease (since each point will be assigned to a closer centroid)
-# It will reach an appropriate no. at some time 
-# after which rate of decrease in this sum is expected to slow down
-# this method looks at this CHANGE IN RATE OF DECREASE to determine appropriate no. of clusters
-# elbow name because of shape of graph
+# # INTERPRETING CLUSTERING RESULTS
+# bank_with_cluster = pd.concat([bank, labels], axis=1)
+# print(bank_with_cluster.head())
 
-dist_list = []
-for i in range(1,10):
-    kmeans = KMeans(n_clusters=i, init='random', random_state=0)
-    kmeans.fit(X)
-    dist_list.append(kmeans.inertia_)
+# bins = [15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 100]
+# qcut_age = pd.cut(bank_with_cluster.age, bins, right=False)
+# df = pd.concat([bank_with_cluster.cluster_number, qcut_age], axis=1)
+# cross_cluster_age = df.groupby(['cluster_number', 'age']).size().unstack().fillna(0)
+# print(cross_cluster_age)
 
-plt.plot(range(1,10), dist_list, marker='+')
-plt.xlabel('Number of clusters')
-plt.ylabel('Distortion')
+# hist_age = pd.value_counts(qcut_age)
+# print(hist_age)
+
+# sns.heatmap(cross_cluster_age.apply(lambda x : x/x.sum(), axis=1), cmap='Blues')
+# plt.show()
+
+# cross_cluster_job = bank_with_cluster.groupby(['cluster_number', 'job']).size().unstack().fillna(0)
+# print(cross_cluster_job)
+
+# sns.heatmap(cross_cluster_job.apply(lambda x : x/x.sum(), axis=1),cmap='Reds')
+# plt.show()
+
+#-------------------------------------------------
+# PRINCIPAL COMPONENT ANALYSIS (PCA)
+# Compress the number of variables without losing much of the information in the original data
+# Preprocessing step
+# Here it is unsupervised dimensionality reduction, whereas supervised dimensionality reduction (ex. Linear Discriminant Analysis) is also available
+
+# creating a randomstate object with seed no. 1
+sample = np.random.RandomState(1)
+
+# generating two random nos.
+X = np.dot(sample.rand(2,2), sample.rand(2,200)).T
+
+sc = StandardScaler()
+X_std = sc.fit_transform(X)
+print('Correlation coefficient: {:.3f}'.format(sp.stats.pearsonr(X_std[:,0], X_std[:,1])[0]))
+plt.scatter(X_std[:,0], X_std[:,1])
 plt.show()
 
-# INTERPRETING CLUSTERING RESULTS
-bank_with_cluster = pd.concat([bank, labels], axis=1)
-print(bank_with_cluster.head())
+# PCA
+pca = PCA(n_components=2)
+pca.fit(X_std)
 
-bins = [15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 100]
-qcut_age = pd.cut(bank_with_cluster.age, bins, right=False)
-df = pd.concat([bank_with_cluster.cluster_number, qcut_age], axis=1)
-cross_cluster_age = df.groupby(['cluster_number', 'age']).size().unstack().fillna(0)
-print(cross_cluster_age)
+# Confirming the learning results of PCA: 
 
-hist_age = pd.value_counts(qcut_age)
-print(hist_age)
+print(pca.components_)  # eigenvectors - represent the directions of the new feature space discovered by PCA
+# vector [0.707, 0.707] corresponds to the first principal component (PC1)
+# vector [-0.707, 0.707] corresponds to the second principal component (PC2)
 
-sns.heatmap(cross_cluster_age.apply(lambda x : x/x.sum(), axis=1), cmap='Blues')
+print('Variance of each principal component: {}'.format(pca.explained_variance_))
+# variance of each attribute
+# sum of the variances of the principal components (2) matches the sum of the original variances of the (standardized) variables. 
+# This means that the variance (information) is preserved.
+
+print('Proportion of variance for each principal component: {}'.format(pca.explained_variance_ratio_))
+# proportion of variance captured by each principal component
+
+# first principal component is aligned in the direction of maximum variance
+# The other principal components are all orthogonal to its preceding principal components
+
+# Visualising the principal components:
+# Parameter settings
+arrowprops=dict(arrowstyle='->',
+                linewidth=2,
+                shrinkA=0, shrinkB=0)
+
+# Function to draw arrows
+def draw_vector(v0, v1):
+    plt.gca().annotate('', v1, v0, arrowprops=arrowprops)
+
+# Plotting the data
+plt.scatter(X_std[:, 0], X_std[:, 1], alpha=0.2)
+
+# Displaying the principal components
+for length, vector in zip(pca.explained_variance_, pca.components_):
+    v = vector * 3 * np.sqrt(length)
+    draw_vector(pca.mean_, pca.mean_ + v)
+
+plt.axis('equal')
 plt.show()
 
-cross_cluster_job = bank_with_cluster.groupby(['cluster_number', 'job']).size().unstack().fillna(0)
-print(cross_cluster_job)
+# correlation coefficients between each principal component and the original explanatory variables are referred to as factor loadings
 
-sns.heatmap(cross_cluster_job.apply(lambda x : x/x.sum(), axis=1),cmap='Reds')
-plt.show()
+#-------------------------------------------------
