@@ -11,3 +11,4 @@ aqi_cleaned.csv
 **/*cleaned*.csv
 *.csv
 bank+marketing/
+online+retail/
