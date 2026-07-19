@@ -266,3 +266,37 @@ print('lift: {:.3f}'.format(lift))
 # Even if the confidence value is high, if the lift value is below 1.0, it may not be suitable as a basis for recommending products to customers
 
 #-------------------------------------------------
+# SUMMARY
+# WHY UNSUPERVISED LEARNING IS DIFFERENT
+# no target variable - just finding structure that already exists in the data
+# goal is discovering patterns, not predicting an outcome
+
+# CLUSTERING
+# k-means - fast, but random initial centroid placement can lead to poor results if centroids start too close together
+# k-means++ - default in sklearn, spaces out initial centroids instead of placing them randomly
+# k-medoids - uses median instead of mean for centroid, more robust to outliers, centroid is always a real data point (never imaginary)
+# make_blobs - generates sample data for clustering, returns X and labels (labels usually discarded, received as "_")
+
+# ELBOW METHOD
+# plots inertia (sum of distances to nearest centroid) against number of clusters
+# inertia always decreases as k increases, but the RATE of decrease slows down at some point
+# the "elbow" in the graph = appropriate number of clusters, not picked arbitrarily
+# applied to bank marketing data - clusters interpreted by cross tabbing with age and job to understand what each cluster represents
+
+# PCA (PRINCIPAL COMPONENT ANALYSIS)
+# compresses variables into new directions (principal components) while preserving as much variance as possible
+# preprocessing step - unsupervised dimensionality reduction (LDA is the supervised version)
+# components_ - eigenvectors, the directions of the new feature space
+# explained_variance_ - variance captured by each component, sums to match original variance = no information lost
+# explained_variance_ratio_ - proportion of total variance each component captures
+# first PC = direction of maximum variance, every other PC is orthogonal to the ones before it
+
+# MARKET BASKET ANALYSIS
+# support - proportion of all baskets (invoices) containing both item A and item B together
+# confidence - of the baskets containing item A, what proportion also contain item B
+# lift - confidence divided by the overall purchase rate of item B on its own
+# lift > 1.0 = cross-selling is more likely than chance, lift < 1.0 = less likely than chance
+
+# KEY INSIGHT
+# high confidence alone can be misleading - always check lift before recommending cross-sells
+# a strong looking rule can still be weaker than what random chance would already produce
