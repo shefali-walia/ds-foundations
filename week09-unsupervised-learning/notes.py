@@ -143,60 +143,126 @@ X, _ = make_blobs(random_state= 10)
 # Preprocessing step
 # Here it is unsupervised dimensionality reduction, whereas supervised dimensionality reduction (ex. Linear Discriminant Analysis) is also available
 
-# creating a randomstate object with seed no. 1
-sample = np.random.RandomState(1)
+# # creating a randomstate object with seed no. 1
+# sample = np.random.RandomState(1)
 
-# generating two random nos.
-X = np.dot(sample.rand(2,2), sample.rand(2,200)).T
+# # generating two random nos.
+# X = np.dot(sample.rand(2,2), sample.rand(2,200)).T
 
-sc = StandardScaler()
-X_std = sc.fit_transform(X)
-print('Correlation coefficient: {:.3f}'.format(sp.stats.pearsonr(X_std[:,0], X_std[:,1])[0]))
-plt.scatter(X_std[:,0], X_std[:,1])
-plt.show()
+# sc = StandardScaler()
+# X_std = sc.fit_transform(X)
+# print('Correlation coefficient: {:.3f}'.format(sp.stats.pearsonr(X_std[:,0], X_std[:,1])[0]))
+# plt.scatter(X_std[:,0], X_std[:,1])
+# plt.show()
 
-# PCA
-pca = PCA(n_components=2)
-pca.fit(X_std)
+# # PCA
+# pca = PCA(n_components=2)
+# pca.fit(X_std)
 
-# Confirming the learning results of PCA: 
+# # Confirming the learning results of PCA: 
 
-print(pca.components_)  # eigenvectors - represent the directions of the new feature space discovered by PCA
-# vector [0.707, 0.707] corresponds to the first principal component (PC1)
-# vector [-0.707, 0.707] corresponds to the second principal component (PC2)
+# print(pca.components_)  # eigenvectors - represent the directions of the new feature space discovered by PCA
+# # vector [0.707, 0.707] corresponds to the first principal component (PC1)
+# # vector [-0.707, 0.707] corresponds to the second principal component (PC2)
 
-print('Variance of each principal component: {}'.format(pca.explained_variance_))
-# variance of each attribute
-# sum of the variances of the principal components (2) matches the sum of the original variances of the (standardized) variables. 
-# This means that the variance (information) is preserved.
+# print('Variance of each principal component: {}'.format(pca.explained_variance_))
+# # variance of each attribute
+# # sum of the variances of the principal components (2) matches the sum of the original variances of the (standardized) variables. 
+# # This means that the variance (information) is preserved.
 
-print('Proportion of variance for each principal component: {}'.format(pca.explained_variance_ratio_))
-# proportion of variance captured by each principal component
+# print('Proportion of variance for each principal component: {}'.format(pca.explained_variance_ratio_))
+# # proportion of variance captured by each principal component
 
-# first principal component is aligned in the direction of maximum variance
-# The other principal components are all orthogonal to its preceding principal components
+# # first principal component is aligned in the direction of maximum variance
+# # The other principal components are all orthogonal to its preceding principal components
 
-# Visualising the principal components:
-# Parameter settings
-arrowprops=dict(arrowstyle='->',
-                linewidth=2,
-                shrinkA=0, shrinkB=0)
+# # Visualising the principal components:
+# # Parameter settings
+# arrowprops=dict(arrowstyle='->',
+#                 linewidth=2,
+#                 shrinkA=0, shrinkB=0)
 
-# Function to draw arrows
-def draw_vector(v0, v1):
-    plt.gca().annotate('', v1, v0, arrowprops=arrowprops)
+# # Function to draw arrows
+# def draw_vector(v0, v1):
+#     plt.gca().annotate('', v1, v0, arrowprops=arrowprops)
 
-# Plotting the data
-plt.scatter(X_std[:, 0], X_std[:, 1], alpha=0.2)
+# # Plotting the data
+# plt.scatter(X_std[:, 0], X_std[:, 1], alpha=0.2)
 
-# Displaying the principal components
-for length, vector in zip(pca.explained_variance_, pca.components_):
-    v = vector * 3 * np.sqrt(length)
-    draw_vector(pca.mean_, pca.mean_ + v)
+# # Displaying the principal components
+# for length, vector in zip(pca.explained_variance_, pca.components_):
+#     v = vector * 3 * np.sqrt(length)
+#     draw_vector(pca.mean_, pca.mean_ + v)
 
-plt.axis('equal')
-plt.show()
+# plt.axis('equal')
+# plt.show()
 
 # correlation coefficients between each principal component and the original explanatory variables are referred to as factor loadings
+
+#-------------------------------------------------
+# MARKET BASKET ANALYSIS/ ASSOCIATION ANALYSIS
+# analyzes the relationships between products purchased together
+# such as the likelihood of purchasing product B when product A is bought
+# named after the "basket" of items that pass through a supermarket checkout counter, which is the basic unit of analysis
+# Results of market basket analysis are known as Association rules - describe relationship between products
+
+url = "http://archive.ics.uci.edu/static/public/352/online+retail.zip"
+response = requests.get(url, stream = True)
+base = os.path.dirname(os.path.abspath(__file__))
+z = zipfile.ZipFile(io.BytesIO(response.content))
+z.extractall(os.path.join(base, "online+retail"))
+
+file_url = os.path.join(base, "online+retail", "Online Retail.xlsx")
+trans = pd.ExcelFile(file_url)
+trans = trans.parse('Online Retail')
+print(trans.head())
+
+# Adding the first character of InvoiceNo as cancel_flg
+trans['cancel_flg'] = trans.InvoiceNo.map(lambda x:str(x)[0])
+
+print(trans.groupby('cancel_flg').size())
+trans = trans[(trans.cancel_flg == '5') & (trans.CustomerID.notnull())]
+
+trans = trans.astype({'StockCode': 'str'})
+print(trans['StockCode'].value_counts().head(5))
+
+# SUPPORT: support of an association rule refers to the number of baskets (InvoiceNos) in which both a particular product and another product were sold together, or the proportion of the total transactions in which this occurs
+
+trans_all = set(trans.InvoiceNo)   # set as in math sets
+trans_a = set(trans[trans['StockCode'] == '85123A'].InvoiceNo) #purchase data for item 1 as trans_a
+print(len(trans_a))
+trans_b = set(trans[trans['StockCode'] == '85099B'].InvoiceNo) #purchase data for item 1 as trans_a
+print(len(trans_b))
+
+trans_ab = trans_a & trans_b  # & = intersection of sets
+print(len(trans_ab))
+
+print('Number of baskets containing both items:{}'.format(len(trans_ab)))
+print('Proportion of baskets containing both items to the total:{:.3f}'.format(len(trans_ab)/len(trans_all))) # calculation of support
+# whether support is high or low depends on relative comparision 
+# In general, rules with low support are often less useful so support may be used as a cut-off criterion
+# support can also be calculated for each item 
+
+# CONFIDENCE : proportion of purchases of a certain item A that also include a certain item B
+
+# confidence for item 85123A is purchased, then item 85099B is also purchased
+print('Confidence:{:.3f}'.format(len(trans_ab)/len(trans_a)))
+
+# confidence for if item 85099B is purchased, then item 85123A is also purchased
+print('Confidence:{:.3f}'.format(len(trans_ab)/len(trans_b)))
+
+# High confidence => cross-selling between products is likely
+# But relying solely on confidence values can sometimes lead to incorrect judgments about cross-selling tendencies so lift is also used.
+
+# LIFT : ratio of the purchase rate of item B when item A is purchased to the overall purchase rate of item B across all baskets
+# if the lift value is greater than 1.0, it indicates that cross-selling between the items is more likely
+#  If the lift value is less than 1.0, it suggests that cross-selling is less likely
+
+# lift for If item 85123A is purchased, then item 85099B is also purchased
+support_b = len(trans_b) / len(trans_all)
+confidence = len(trans_ab) / len(trans_a)
+lift = confidence / support_b
+print('lift: {:.3f}'.format(lift))
+# Even if the confidence value is high, if the lift value is below 1.0, it may not be suitable as a basis for recommending products to customers
 
 #-------------------------------------------------
