@@ -123,3 +123,29 @@ plt.legend()
 plt.show()
 
 #-------------------------------------------------
+# MARKET BASKET ANALYSIS
+df_use_with_clusters['PM25_high'] = df_use_with_clusters['PM2.5'] > df_use_with_clusters['PM2.5'].median()
+df_use_with_clusters['NO2_high'] = df_use_with_clusters['NO2'] > df_use_with_clusters['NO2'].median()
+
+total = len(df_use_with_clusters)
+both_high = ((df_use_with_clusters['PM25_high']) & (df_use_with_clusters['NO2_high'])).sum()
+PM25_high_count = df_use_with_clusters['PM25_high'].sum()
+no2_high_count = df_use_with_clusters['NO2_high'].sum()
+
+support = both_high/total
+confidence = both_high/PM25_high_count
+lift = confidence/(no2_high_count/total)
+
+print('Support:', support)
+print('Confidence:', confidence)
+print('Lift:', lift)
+
+# Result: Suppot = 0.327 => about 33% of all days both PM2.5 and NO2 elevated together - substantial chunk
+# confidence = 0.653 => on days when PM2.5 was high, NO2 was also high about 65% of the time
+# lift = 1.31 => Since lift > 1, it means PM2.5 being high raises the odds of NO2 also being high - imp
+# if they were unrelated (independent), lift would be 1.0
+# they likely share a common source, like traffic emissions or a weather pattern (e.g. low wind, temperature inversion) that traps multiple pollutants together on the same days
+
+#-------------------------------------------------
+
+
