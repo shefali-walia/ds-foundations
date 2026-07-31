@@ -147,5 +147,35 @@ print('Lift:', lift)
 # they likely share a common source, like traffic emissions or a weather pattern (e.g. low wind, temperature inversion) that traps multiple pollutants together on the same days
 
 #-------------------------------------------------
+# SUMMARY
 
+# K-MEANS AND ELBOW METHOD
+# scaled PM2.5, PM10, NO2 before clustering since kmeans measures distance
+# ran elbow method for k = 1 to 10, curve flattened around k = 3 or 4, went with k = 4
+# fit final kmeans model with k = 4, merged cluster labels back with original dataframe
+# had to reset index before concat, since dropna leaves gaps in the index and concat aligns by index not position
+
+# CLUSTER INTERPRETATION
+# binned AQI into Good, Moderate, Unhealthy, Hazardous
+# cross tabbed cluster number against aqi bin
+# one cluster corresponded mostly to unhealthy to hazardous days, showing clusters are not arbitrary groupings but reflect real pollution severity patterns
+
+# PCA
+# used PM2.5, PM10, NO2 only, left out AQI since AQI is usually calculated from these features
+# compressed 3 features into 2 principal components
+# PC1 explained about 74 percent of variance, PC2 explained about 21 percent, together about 94.5 percent, almost no information lost
+# PC1 weights were similar and positive across all three pollutants, meaning PC1 represents general pollution intensity, all three moving together
+# PC2 had NO2 weighted heavily positive while PM2.5 and PM10 were negative, meaning PC2 captures the contrast between NO2 and particulate matter, likely separating traffic driven pollution from other sources
+# plotted PC1 vs PC2 colored by cluster, clusters separated clearly along PC1, confirming PC1 does represent overall pollution level
+
+# MARKET BASKET ANALYSIS
+# flagged PM2.5 and NO2 as high or low using median split, treated each row as a basket
+# support was 0.327, about a third of all days had both pollutants high together
+# confidence was 0.653, on days PM2.5 was high, NO2 was also high about 65 percent of the time
+# lift was 1.31, greater than 1, meaning PM2.5 being high genuinely raises the odds of NO2 also being high, not just coincidence
+# suggests a shared source behind both pollutants, likely traffic emissions or weather conditions like low wind or temperature inversion trapping pollutants together
+
+# KEY INSIGHT
+# clustering and PCA told the same story from different angles, PC1 lined up with cluster separation and both pointed to overall pollution intensity as the dominant pattern in the data
+# market basket analysis added a different kind of evidence, showing PM2.5 and NO2 are not independent but move together often enough to suggest a common cause
 
