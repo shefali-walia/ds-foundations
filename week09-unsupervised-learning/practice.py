@@ -64,7 +64,7 @@ kmeans.fit(X_scaled)
 labels = pd.Series(kmeans.labels_, name='Cluster Number')
 print(labels.value_counts(sort=False))
 
-df_use_with_clusters = pd.concat([df_use, labels], axis=1)
+df_use_with_clusters = pd.concat([df_use.reset_index(drop = True), labels], axis=1)
 print(df_use_with_clusters.head())
 
 #-------------------------------------------------
@@ -75,5 +75,51 @@ df_use_with_clusters['aqi_bin'] = pd.cut(df_use_with_clusters['AQI'], bins = bin
 print(df_use_with_clusters.head())
 print(df_use_with_clusters.groupby(['Cluster Number', 'aqi_bin']).size().unstack())
 # result: Cluster 1 = most unhealthy - hazardous days
+
+#-------------------------------------------------
+# PCA
+# we have 3 numeric features (PM2.5, PM10, NO2) not taking AQI because usually AQI is calculated from these features
+# compressing 3 --> 2 features
+features = ['PM2.5', 'PM10', 'NO2']
+X = df_use[features]
+
+sc = StandardScaler()
+X_std = sc.fit_transform(X)
+
+pca = PCA(n_components=2)
+pca.fit(X_std)
+#  model actually "learns" from the data
+# Nothing is transformed yet, it's just calculating the directions.
+
+X_pca = pca.transform(X_std)
+# This is a new array- same number of rows as before, but now only 2 columns (PC1, PC2) instead of 3
+
+print(pca.explained_variance_ratio_) # check how much info you kept
+# Variance captured: [0.739, 0.206] — PC1 captures about 74% of the spread, PC2 adds another 21%.
+# Together that's ~94.5%, so almost nothing is lost by compressing 3 pollutants into 2 new directions.
+
+print(pca.components_) # Check what PC1 is actually made of
+# PC1 weights: [0.617, 0.617, 0.489] for PM2.5, PM10, NO2 resp.
+# All three are positive and fairly similar in size — this means PC1 is basically an "overall pollution" axis
+# PC2 weights: [-0.346, -0.345, 0.872] - interesting
+# PM2.5 and PM10 both have similar negative weights, but NO2 has a large positive weight, and it's the dominant one
+# This means PC2 is capturing the contrast between NO2 and particulate matter (PM2.5/PM10) — i.e., days where NO2 is elevated relative to particulates, or vice versa
+
+# Result:
+# PC1 = general pollution intensity (all three pollutants moving together)
+# PC2 = NO2 vs. particulate contrast (likely distinguishing traffic-driven pollution from other sources)
+
+# PLOTTING PC1 VS PC2
+colors = ['blue', 'red', 'green', 'purple']
+
+for i in range(4):
+    plt.scatter(X_pca[df_use_with_clusters['Cluster Number'] == i, 0],
+                X_pca[df_use_with_clusters['Cluster Number'] == i, 1],
+                color = colors[i], label = f'cluster {i}', alpha=0.3)
+
+plt.xlabel('PC1 (general pollution intensity)')
+plt.ylabel('PC2 (NO2 vs particulate contrast)')
+plt.legend()
+plt.show()
 
 #-------------------------------------------------
