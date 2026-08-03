@@ -67,4 +67,57 @@ print(pm25_12_12.rolling(3).mean().head())
 print(pm25_12_12.rolling(3).std().head()) # moving std. deviation
 
 #-------------------------------------------------
+# ENCODING TIME SERIES DATA
+import datetime
+import random
 
+# SIMPLE ENCODING - NOT CONSIDERING PERIODICITY 
+# randomly selecting 10 dates to work with
+
+# function to output random date between start and end
+def generate_rand_date(start, end):
+    delta_days = (end - start).days
+    return start + datetime.timedelta(days = random.randint(0, delta_days))
+# datetime.timedelta : A duration expressing the difference between two datetime or date instances to microsecond resolution.
+
+# Fixing the random seed and getting 10 random dates in the 2010s
+random.seed(0)
+start = datetime.datetime(2010, 1, 1)
+end = datetime.datetime(2020, 12, 31)
+random_dates = [generate_rand_date(start, end) for _ in range(10)]
+
+# converting the generated dates to a df
+df_dates = DataFrame(random_dates, columns = ['ymd'])
+print(df_dates)
+
+# splitting year, month, day
+df_dates['year'] = df_dates['ymd'].apply(lambda x: x.year)  # extracts x.year from datetime object x, apply() applies the lambda fnct to every object of the dataframe/series
+df_dates['month'] = df_dates['ymd'].apply(lambda x: x.month)
+df_dates['day'] = df_dates['ymd'].apply(lambda x: x.day)
+print(df_dates)
+# we can now treat each year, month, and day as numerical variables
+# But there are 2 problems: 
+# 1. information of year, month, and day is separate, making it difficult to learn their chronological order
+# 2. Discontinuities occur in parts that should be continuous as a time series - ex. it does not capture the fact that Jan and Dec, or the 1st and 31st of a month, are close to each other in a cyclical sense
+
+# To solve 1st problem, we can create a new variable representing the difference from a reference point
+# to represent the information of how old or new a date is based on a reference ex. 1st Jan 2010 
+start_date = pd.Timestamp('2010-01-01 00:00:00')
+df_dates['total_days'] = df_dates['ymd'].apply(lambda x: (x - start_date).days)
+# counts days from reference date - info on how old or new the date is - chronological order
+print(df_dates)
+
+# To solve 2nd problem: 
+# CYCLICAL ENCODING - using trigonometric fncts. to encode periodic structure of time variables
+# Variables with periodicity such as months and days are mapped to points on the unit circle and represented by the coordinates of each point
+# The coordinates of each point are represented by cosine and sine, which are then used as new numerical variables.
+
+df_dates['month_cos'] = df_dates['month'].apply(lambda x: np.cos(2*np.pi* x/12))
+df_dates['month_sin'] = df_dates['month'].apply(lambda x: np.sin(2*np.pi* x/12))
+
+df_dates['day_cos'] = df_dates['day'].apply(lambda x: np.cos(2*np.pi * x/31))
+df_dates['day_sin'] = df_dates['day'].apply(lambda x: np.sin(2*np.pi * x/31))
+
+print(df_dates)
+
+#-------------------------------------------------
