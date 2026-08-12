@@ -233,3 +233,102 @@ plt.tight_layout()
 plt.show()
 
 #-------------------------------------------------
+# STATISTICAL MODELS FOR STATIONARY TIME SERIES DATA
+
+# AR (Autoregressive) Model: future data is predicted by summing up a constant multiple of the past data values.
+# Positive coefficients mean past increases carry forward, negative ones mean the opposite. 
+# phi close to 0 means no impact
+
+# MA (Moving Average) Model: future data is predicted by summing up a constant multiple of past errors (the difference between predicted value and actual value) of the data to be predicted.
+# The mean of the MA (=moving average) model does NOT change
+# perceive the error term as "over/underestimation from the predicted value"
+
+# ARMA (AutoRegressive Moving Average) Model: both past values of the data and past error terms are utilized in making predictions
+# future data points are predicted by adding a constant multiple of past data points to a constant multiple of past error terms
+
+# STATIONARITY: property where time series data transitions stably over time
+# it means that the expected value of the time series data at each time point is constant, and the autocorrelation depends only on the time lag (Weak stationarity)
+# So future data can be predicted based on past data characteristics
+
+# Non-stationary data has changing properties as time progresses
+# So creating a learning model using past data may lead to unreliable predictions for future data
+
+# Stationarity is determined using Augmented Dickey-Fuller (ADF) test
+
+from statsmodels.tsa.stattools import adfuller
+
+result = adfuller(sunspot_dataset)
+
+# Displaying results
+print('Test Statistic\t: %f' %result[0])
+print('p-value\t: %f' % result[1])
+print('Critical Values\t:')
+for key, value in result[4].items():
+    print('\t%s\t: %.3f' % (key, value))
+
+# Evaluating the p-value
+if result[1] < 0.05:
+    print("The time series data is considered stationary.")
+else:
+    print("The time series data is not considered stationary.")
+
+# estimate the appropriate orders for the observations and error terms to be used in prediction using AIC (Akaike Information Criterion)
+# metric to evaluate the trade-off between the complexity of the model and its goodness of fit to the data
+
+
+# Split dataset: use oldest 95% for training and latest 5% for testing
+len_test = int(0.05 * len(sunspot_dataset))
+train = sunspot_dataset[:len(sunspot_dataset) - len_test]
+test = sunspot_dataset[len(sunspot_dataset) - len_test:]
+
+# DTERMINING HYPERPARAMETERS FOR ARMA MODEL
+from statsmodels.tsa.arima.model import ARIMA
+import statsmodels.api as sm
+
+max_ar = 11  # max. AR order
+max_ma = 11  # max. MA order
+
+# Initialising min. AIC to infinity
+best_aic = np.inf
+best_order = None
+
+for p in range(max_ar + 1):
+    for q in range(max_ma + 1):
+        try:
+            # p is the number of past observed values used for prediction, q is the number of past error terms used for prediction
+            # Although it is written as ARIMA, when the middle number is 0 as in (p, 0, q), it becomes an ARMA model
+            tmp_mdl = ARIMA(train, order = (p,0,q), freq="AS")
+            result = tmp_mdl.fit()
+            tmp_aic = result.aic
+            # If AIC is small, update the model and parameters
+            if tmp_aic < best_aic:
+                best_aic = tmp_aic
+                best_order = (p, q)
+        except:
+            print('Error')
+            continue
+
+print('aic: {:6.5f} | order: {}'.format(best_aic, best_order))
+# therefore past values from 8 year and error terms from 6 year minimise the AIC to predict future values
+
+# FORECASTING WITH ARMA MODEL
+from sklearn.metrics import mean_squared_error
+
+fig, ax = plt.subplots(figsize=(10, 5), dpi=100)
+ax.grid(True, linestyle='--', alpha=0.5)
+
+# Use historical forecast values for 8 years and error terms for 6 years (based on grid search using AIC)
+arma_model = ARIMA(train, order=(8, 0, 6), freq="AS")
+result = arma_model.fit()
+forecast = result.forecast(len_test)
+
+# Display the original data with a blue (default) line
+ax.plot(sunspot_dataset, ls="-")
+# Display the forecasted results with a red line
+ax.plot(forecast, ls="-", color="r", label="predicted")
+
+# Calculate the Mean Squared Error between predicted data and actual data
+mse = mean_squared_error(test, forecast)
+print("Mean Squared Error:", mse)
+
+#-------------------------------------------------
