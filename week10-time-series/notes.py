@@ -332,3 +332,167 @@ mse = mean_squared_error(test, forecast)
 print("Mean Squared Error:", mse)
 
 #-------------------------------------------------
+#%%
+# NON-STATIONARY TIME SERIES MODELING WITH ARIMA PROCESS
+# ARIMA model (Autoregressive Integrated Moving Average model) is an extension of the ARMA model that can be applied to non-stationary datasets
+import statsmodels.datasets.co2 as co2
+import pandas as pd
+co2_data = co2.load().data
+co2_data = co2_data.iloc[1188:]
+
+co2_data.index = pd.to_datetime(co2_data.index)
+
+co2_data = co2_data.resample('M').mean()
+print(co2_data)
+
+import matplotlib.pyplot as plt
+co2_data.plot()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
+
+from statsmodels.tsa.seasonal import STL
+
+# STL decomposition
+stl = STL(co2_data, period=11)
+res = stl.fit()
+
+fig, axes = plt.subplots(4, 1, figsize=(10, 8), sharex=True)
+
+co2_data.plot(ax=axes[0])
+axes[0].grid(True, linestyle='--', alpha=0.5)
+axes[0].set_title('Original Data')
+
+res.trend.plot(ax=axes[1])
+axes[1].grid(True, linestyle='--', alpha=0.5)
+axes[1].set_title('Trend')
+
+res.seasonal.plot(ax=axes[2])
+axes[2].grid(True, linestyle='--', alpha=0.5)
+axes[2].set_title('Seasonal')
+
+res.resid.plot(ax=axes[3])
+axes[3].grid(True, linestyle='--', alpha=0.5)
+axes[3].set_title('Residual')
+
+plt.tight_layout()
+plt.show()
+# clear upward trend and periodicity seen
+
+# ADF test
+from statsmodels.tsa.stattools import adfuller
+
+result = adfuller(co2_data)
+
+print('Statistical test statistic\t: %f' % result[0])
+print('p-value\t: %f' % result[1])
+print('Critical values\t:')
+for key, value in result[4].items():
+    print('\t%s\t: %.3f' % (key, value))
+
+if result[1] < 0.05:
+    print("The time series data is considered stationary.")
+else:
+    print("The time series data is not considered stationary.")
+# CO2 concentration data is not stationary
+# One possible cause of a non-stationary data is the presence of a trend
+# However, even in such non-stationary data, there are cases where the difference between adjacent data points (first-order differencing) becomes stationary
+# The first-order differencing data essentially represents the "amount of change from the previous time point" at each time point
+# Taking the first-order difference from data with a trend can remove a constant trend, making the data properties constant regardless of time.
+
+# Create data of the difference between adjacent time points
+co2_data_diff = co2_data.diff().dropna()
+
+plt.figure(figsize=(10, 5))
+co2_data_diff.plot()
+
+print(len(co2_data_diff))
+plt.grid(True, linestyle='--', alpha=0.5)
+# the rising trend seems to have resolved
+
+# STL decomp. and ADF test on differenced data
+stl = STL(co2_data_diff, period=11)
+res = stl.fit()
+
+fig, axes = plt.subplots(4, 1, figsize=(10, 8), sharex=True)
+
+co2_data_diff.plot(ax=axes[0])
+axes[0].grid(True, linestyle='--', alpha=0.5)
+axes[0].set_title('Original Data')
+
+res.trend.plot(ax=axes[1])
+axes[1].grid(True, linestyle='--', alpha=0.5)
+axes[1].set_title('Trend')
+
+res.seasonal.plot(ax=axes[2])
+axes[2].grid(True, linestyle='--', alpha=0.5)
+axes[2].set_title('Seasonal')
+
+res.resid.plot(ax=axes[3])
+axes[3].grid(True, linestyle='--', alpha=0.5)
+axes[3].set_title('Residual')
+
+plt.tight_layout()
+plt.show()
+
+result = adfuller(co2_data_diff)
+
+print('Statistical test statistic\t: %f' % result[0])
+print('p-value\t: %f' % result[1])
+print('Critical values\t:')
+for key, value in result[4].items():
+    print('\t%s\t: %.3f' % (key, value))
+
+if result[1] < 0.05:
+    print("The time series data is considered stationary.")
+else:
+    print("The time series data is not considered stationary.")
+
+# data after taking a first difference is stationary
+# If you cannot achieve stationarity even after taking the first difference, you may need to take a second difference (difference of differences) to achieve stationarity
+
+# ARIMA model is a model used for forecasting on data that can achieve stationarity by taking differences  n  times.
+# After taking differences, we use the same method as the ARMA model to make predictions.
+
+len_test = 12
+train = co2_data[:len(co2_data) -len_test]
+test = co2_data[len(co2_data)-len_test:]
+
+import statsmodels.api as sm
+import numpy as np
+from statsmodels.tsa.arima.model import ARIMA
+import warnings
+warnings.filterwarnings('ignore')
+
+max_ar = 12  # Maximum order of AR
+max_ma = 3  # Maximum order of MA
+
+best_aic = np.inf
+best_order = None
+
+for p in range(max_ar+1):
+    for q in range(max_ma+1):
+        try:
+            tmp_mdl = ARIMA(train, order=(p, 1, q))
+            result = tmp_mdl.fit()
+            tmp_aic = result.aic
+            
+            if tmp_aic < best_aic:
+                best_aic = tmp_aic
+                best_order = (p, q)
+        except: continue
+
+print('aic: {:6.5f} | order: {}'.format(best_aic, best_order))
+
+fig, ax = plt.subplots(figsize=(10, 5), dpi=100)
+ax.grid(True, linestyle='--', alpha=0.5)
+
+# Prediction using ARMA model with p=12, q=2 based on the results obtained from grid search in terms of AIC
+# The 1 in order=(12, 1, 2) represents first order differencing
+arma_model = ARIMA(train, order=(12, 1, 2))
+result = arma_model.fit()
+forecast = result.forecast(len_test)
+
+ax.plot(co2_data, ls="-")
+ax.plot(forecast, ls="-", color="r", label="predicted")
+# %%
+
