@@ -496,3 +496,37 @@ ax.plot(co2_data, ls="-")
 ax.plot(forecast, ls="-", color="r", label="predicted")
 # %%
 
+#-------------------------------------------------
+# SUMMARY
+# Time series data changes over time, and here we worked with univariate series - a single value tracked at successive time points.
+# Handling it well means converting scattered date fields into a proper datetime index, then using that index to resample, shift, and smooth the data.
+
+# HANDLING AND UNDERSTANDING TIME SERIES DATA
+# Combining separate year/month/day/hour columns into a single datetime index makes slicing by period straightforward (e.g. pm25.loc['2012-12']).
+# Resampling changes the frequency of the data - 'D' for daily, 'M' for monthly, 'Y' for yearly - paired with an aggregation like .last() or .mean().
+# Shifting moves the data while keeping the index fixed, which is what makes day-over-day ratios and differences possible in one line.
+# Moving average (rolling().mean()) and moving std smooth out short-term noise to reveal the underlying pattern.
+
+# ENCODING TIME SERIES DATA
+# Simple encoding splits a date into year, month, day as separate numerical columns, but this loses chronological order and treats cyclical values as linear.
+# Adding total_days (days since a reference date) restores chronological order as a single continuous variable.
+# Cyclical encoding solves the periodicity problem - month and day are mapped onto a unit circle using sine and cosine, so December and January end up close together instead of far apart numerically.
+
+# PREDICTING TIME SERIES DATA
+# Two broad approaches: statistical models (ARIMA, SSM) which are interpretable but rely on assumptions about the data's statistical properties, and ML models (RNNs, transformers, or even non-time-series methods like random forest) which capture nonlinear patterns but are harder to interpret.
+# Autocorrelation measures how correlated the data is with itself at a lag of k periods; lag 0 is always 1 by definition.
+# The correlogram plots these coefficients against lag - bars within the confidence band mean no significant autocorrelation at that lag, bars outside mean there is.
+# Sunspot data showed a damped oscillation that strengthens again every 10-11 years, matching the known solar cycle, while random dice rolls showed near-zero autocorrelation at every lag, confirming independence.
+
+# STATIONARITY AND STL DECOMPOSITION
+# Stationarity means the expected value stays constant over time and autocorrelation depends only on lag, not on absolute time - this is what makes past patterns usable for future prediction.
+# The Augmented Dickey-Fuller (ADF) test checks this formally; p < 0.05 means the series is considered stationary.
+# CO2 concentration data failed the ADF test (non-stationary, driven by a clear upward trend), but first-order differencing (subtracting each point from the one before it) removed the trend and made it pass.
+# STL decomposition breaks a series into trend, seasonal, and residual components, useful for visually confirming what the ADF test says numerically.
+
+# ARMA AND ARIMA MODELS
+# AR models predict using past values, MA models predict using past error terms, ARMA combines both - all three require stationary data.
+# ARIMA extends ARMA to non-stationary data by differencing first (the 'I' in ARIMA), then modeling the differenced series the same way.
+# Best (p, q) or (p, d, q) orders are found by grid search, picking whichever combination minimizes AIC - a metric balancing model fit against complexity.
+# On the sunspot data, order (8, 6) minimised AIC, meaning 8 years of past values and 6 years of past error terms gave the best forecast; on the CO2 data, order (12, 1, 2) worked best after first differencing.
+# Model quality was checked with mean squared error between forecast and actual test values.
