@@ -136,3 +136,27 @@ else:
 # Data is stationary so no differencing needed
 
 #-------------------------------------------------
+# SUMMARY
+# DATETIME INDEXING AND THE MULTI-CITY TRAP
+# Converting Date to datetime and slicing by month worked fine on the full dataset, but resampling and rolling averages later produced a corrupted-looking plot with a diagonal sawtooth line cutting across it.
+# The cause turned out to be duplicate dates - the dataset has multiple cities sharing the same date range, so resampling without filtering to one city first was silently mixing readings from different cities together.
+# Filtering to a single city (Delhi, 1930 rows) before resampling fixed the duplicate index problem and gave one clean value per date, which is a precondition every one of the later steps assumes and does not check for automatically.
+
+# RESAMPLING, SHIFTING, AND MOVING AVERAGES
+# Monthly resampling with .last() on the single-city NO2 series confirmed 67 months of data with no missing values at that resolution.
+# Shift-based ratio and .pct_change() both worked once run on the clean single-city series.
+# Rolling 7-day mean and std produced NaN for the first 6 rows as expected, but the plotted comparison still showed a second sawtooth artifact even after the city fix.
+
+# THE MISSING DATE GAP
+# Reindexing to a complete daily date range and checking duplicated()/is_monotonic_increasing ruled out duplicates as the remaining cause - both came back clean (0 and True).
+# Slicing June to September 2017 directly showed the real issue: an actual two-month gap in the sensor data (2017-07-03 straight to 2017-08-31), plus smaller day-level gaps scattered earlier in the series.
+# Reindexing to the full daily range and leaving the gaps as NaN (rather than forward-filling over them) gave a plot that honestly shows a break in the line instead of drawing a fake diagonal connecting two unrelated dates.
+
+# CYCLICAL ENCODING
+# Hit a genuine gotcha here: cyclical encoding failed while Date was still set as the index, because .apply() on a column needs Date to exist as an actual column, not as the index.
+# Commenting out the datetime indexing step (and everything downstream that depended on it) freed Date back up as a column and let month_sin/cos and day_sin/cos encode correctly.
+# This is a good one to remember - datetime indexing and column-based feature engineering on that same date information can conflict, and the fix is either resetting the index temporarily or doing the encoding before indexing.
+
+# STATIONARITY CHECK
+# Ran the ADF test on NO2 (full df_use, not city-filtered) and got a p-value low enough to print as 0.000000 under %f formatting - confirmed as a genuinely tiny value rather than literally zero by printing result[1] without formatting.
+# p < 0.05 means the series is stationary, no differencing required, which fits the pattern already seen in the moving average plot: NO2 oscillates seasonally (winter peaks) around a fairly stable mean rather than trending upward the way CO2 did in the Week 10 notes.
