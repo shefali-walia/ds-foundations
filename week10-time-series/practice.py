@@ -32,67 +32,107 @@ df_use['Date'] = pd.to_datetime(df_use['Date'])
 
 print("Data types: \n",df_use.dtypes) 
 
-df_use.set_index('Date', inplace=True)
-print(df_use.head(10))
+# df_use.set_index('Date', inplace=True)
+# print(df_use.head(10))
 
-# slicing
-df_use_2016_09 = df_use.loc['2016-09']
-print(df_use_2016_09.head(10))
+# # slicing
+# df_use_2016_09 = df_use.loc['2016-09']
+# print(df_use_2016_09.head(10))
 
-print(df_use.shape)         # (17506,5)
-print(df_use_2016_09.shape) # (111,5)
+# print(df_use.shape)         # (17506,5)
+# print(df_use_2016_09.shape) # (111,5)
+
+# #-------------------------------------------------
+# # RESAMPLING AND MISSING VALUES FOR NO2
+
+# city = 'Delhi'
+# df_city = df_use[df_use['City'] == city]
+# print(df_city.head(10))
+
+# print(df_city.index.duplicated().sum())   # no rows with same date index
+# print(df_city.shape)   # (1930,5)
+
+# df_no2 = df_city[['NO2']]   # Don't need to mention Date in column list as it is already the index
+# print(df_no2.head(10))
+# print(df_no2.resample('M').last())
+# print(df_no2.resample('M').last().isna().sum())  # No missing values to fill
+
+# print(df_no2.shape)                      # (1930,1)
+# print(df_no2.resample('M').last().shape) # (67,1) => 67 Months of data
+
+# #-------------------------------------------------
+# # SHIFTING AND PERCENT CHANGE
+
+# no2_ratio = df_no2.resample('M').last() / df_no2.resample('M').last().shift(1)
+# print(no2_ratio.head(10))
+
+# no2_ratio_pct = df_no2.pct_change(periods=1, fill_method=None, freq=None)
+# print(no2_ratio_pct.head(10))
+
+# #-------------------------------------------------
+# # MOVING AVG. AND STD. DEV.
+
+# print(df_no2.rolling(7).mean().head(10))
+# print(df_no2.rolling(7).std().head(10))
+# # Shows NaN for the first 6 rows
+
+# df_no2 = df_city[['NO2']].sort_index()
+# full_range = pd.date_range(df_no2.index.min(), df_no2.index.max(), freq='D')
+# df_no2 = df_no2.reindex(full_range)  # Gap in chart shows missing data
+
+# plt.figure(figsize=(8,6))
+# plt.plot(df_no2, color = 'Red', label='Daily NO2')
+# plt.plot(df_no2.rolling(7).mean(), color = 'Black', label='7-day rolling avg')
+
+# plt.title('Daily NO2 vs Weekly Rolling Average')
+# plt.tight_layout()
+# plt.grid(True)
+# plt.legend()
+# plt.show()
+
+# print(df_no2.index.duplicated().sum())
+# print(df_no2.index.is_monotonic_increasing)
+# print(df_no2.loc['2017-06':'2017-09'])  # Missing data 
 
 #-------------------------------------------------
-# RESAMPLING AND MISSING VALUES FOR NO2
+# CYCLICAL ENCODING
 
-city = 'Delhi'
-df_city = df_use[df_use['City'] == city]
-print(df_city.head(10))
+df_use['Year'] = df_use['Date'].apply(lambda x: x.year)
+df_use['Month'] = df_use['Date'].apply(lambda x: x.month)
+df_use['Day'] = df_use['Date'].apply(lambda x: x.day)
+print(df_use.head())
 
-print(df_city.index.duplicated().sum())   # no rows with same date index
-print(df_city.shape)   # (1930,5)
+""" Got Error here because I was trying to do cyclical Encoding on "Date" column.
+I had already set Date column as Index (Datetime Indexing) so it was not possible to encode. 
+After commenting out the datetime indexing and functions which worked using datetime index (resampling, slicing etc), the encoding worked."""
 
-df_no2 = df_city[['NO2']]   # Don't need to mention Date in column list as it is already the index
-print(df_no2.head(10))
-print(df_no2.resample('M').last())
-print(df_no2.resample('M').last().isna().sum())  # No missing values to fill
+df_use['month_sin'] = df_use['Month'].apply(lambda x: np.sin(2* np.pi * x/12))
+df_use['month_cos'] = df_use['Month'].apply(lambda x: np.cos(2* np.pi * x/12))
 
-print(df_no2.shape)                      # (1930,1)
-print(df_no2.resample('M').last().shape) # (67,1) => 67 Months of data
+df_use['day_sin'] = df_use['Day'].apply(lambda x: np.sin(2* np.pi * x/31))
+df_use['day_cos'] = df_use['Day'].apply(lambda x: np.cos(2* np.pi * x/31))
+print(df_use.head())
 
-#-------------------------------------------------
-# SHIFTING AND PERCENT CHANGE
-
-no2_ratio = df_no2.resample('M').last() / df_no2.resample('M').last().shift(1)
-print(no2_ratio.head(10))
-
-no2_ratio_pct = df_no2.pct_change(periods=1, fill_method=None, freq=None)
-print(no2_ratio_pct.head(10))
+# Cyclical encoding can help identify periodicity rather than just chronological order, 
+# Ex. Jan comes after Dec and even though they are first and last month they are close together 
 
 #-------------------------------------------------
-# MOVING AVG. AND STD. DEV.
+# STATIONARITY CHECK
 
-print(df_no2.rolling(7).mean().head(10))
-print(df_no2.rolling(7).std().head(10))
-# Shows NaN for the first 6 rows
+from statsmodels.tsa.stattools import adfuller
 
-df_city = df_use[df_use['City'] == city]
-df_no2 = df_city[['NO2']].sort_index()
-full_range = pd.date_range(df_no2.index.min(), df_no2.index.max(), freq='D')
-df_no2 = df_no2.reindex(full_range)  # Gap in chart shows missing data
+result = adfuller(df_use['NO2'])
 
-plt.figure(figsize=(8,6))
-plt.plot(df_no2, color = 'Red', label='Daily NO2')
-plt.plot(df_no2.rolling(7).mean(), color = 'Black', label='7-day rolling avg')
+print('Test Statistic\t: %f' %result[0])
+print('p-value\t: %f' % result[1])       # very small value, prints as 0, can check by print(result[1]) with no %f formatting
+print('Critical Values\t:')
+for key, value in result[4].items():
+    print('\t%s\t: %.3f' % (key, value))
 
-plt.title('Daily NO2 vs Weekly Rolling Average')
-plt.tight_layout()
-plt.grid(True)
-plt.legend()
-plt.show()
-
-print(df_no2.index.duplicated().sum())
-print(df_no2.index.is_monotonic_increasing)
-print(df_no2.loc['2017-06':'2017-09'])  # Missing data 
+if result[1] < 0.05:
+    print("The time series data is considered stationary.")
+else:
+    print("The time series data is not considered stationary.")
+# Data is stationary so no differencing needed
 
 #-------------------------------------------------
